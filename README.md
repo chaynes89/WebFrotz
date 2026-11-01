@@ -174,8 +174,10 @@ Windows CI builds the actual NSIS installer, runs Rust storage regressions and
 launches the **release Tauri executable/WebView2**, loading a generated story
 through the real native picker. It exercises WASM gameplay, map toggle, native
 save/restore/export, close/reopen persistence, restart and clearing history.
-Its isolated CDP port **4181** is enabled only by the CI process environment;
-production does not enable a debugging port. Browser adapter tests separately
+Its isolated CDP port **4181** is enabled only on the disposable CI runner,
+using an executable-specific machine policy because elevated WebView2 150+
+ignores environment flags; the policy is removed after the test. Production
+does not enable a debugging port. Browser adapter tests separately
 mock native IPC but run the actual WASM map-import path.
 The local implementation machine lacked MSVC/Windows SDK; local checks cover
 TypeScript, real WASM/portable regressions and browser interaction, while the
