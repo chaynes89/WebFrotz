@@ -1,8 +1,32 @@
-# WebFrotz
+# WebFrotz 1.0
 
 A deep-space story terminal: ivory hardware, phosphor-green text, dark CRT
 surfaces and an instrument-panel map. Built with **Vue 3, TypeScript, Vite and
 Three.js**, executing the **actual Frotz C interpreter in WebAssembly**.
+
+![WebFrotz 1.0 retro terminal with a six-room map and an amber vertical connection](docs/webfrotz-1.0.png)
+
+*Actual browser gameplay using the original generated survey-station fixture.
+The populated map, room labels and vertical link come from the C interpreter
+and portable map model, not a mockup. No commercial story text is shown.*
+
+## Download 1.0
+
+Get **[WebFrotz 1.0](https://github.com/chaynes89/WebFrotz/releases/tag/v1.0.0)**.
+The release includes `webfrotz-1.0.0-static.zip`, a ready-to-serve site with the
+real WASM interpreter, plus `webfrotz-1.0.0-source.zip` from the same passing
+commit. Extract the static archive and serve its root over HTTP(S), for example:
+
+```powershell
+python -m http.server 4179 --bind 127.0.0.1
+```
+
+Open `http://127.0.0.1:4179/`; opening `index.html` directly will not work.
+No commercial games are bundled. The supported versions and browser limitations
+below also apply to 1.0; a stable release does not imply complete desktop parity.
+Retain `COPYING.txt`, `SOURCE.txt` and the notices in `licenses/` when
+redistributing. Provide the matching corresponding source under the GPL;
+see [DEPENDENCIES.md](DEPENDENCIES.md) and [PROVENANCE.md](PROVENANCE.md).
 
 ## Play
 
@@ -106,7 +130,10 @@ npm run build
 ```
 
 CI produces a `webfrotz-static-site` artifact. No hosted deployment, release or
-Pages configuration is assumed.
+Pages configuration is performed automatically. Passing CI also produces
+`webfrotz-release-assets` with versioned static and matching-source zip files,
+including GPL and runtime dependency notices. To package a committed version
+locally after building, run `npm run package:release`.
 
 ## Verification
 
@@ -139,6 +166,13 @@ npm run test:browser
 ```
 
 The test server uses port 4173, separate from the optional local preview on 4175.
+
+The README image is reproducible using only the original generated `station.z3`
+fixture. With an isolated build preview on port 4178, run `npm run screenshot`.
+`WEBFROTZ_SCREENSHOT_URL` may select another loopback preview; the capture tool
+refuses ports 4175/4176 to avoid existing user sessions. It executes actual
+commands, checks six discovered rooms and a vertical movement, then captures
+the unmodified UI. The fixture is a small opcode test story, not a full adventure.
 
 Native portable regressions need CMake 3.20+, Python and a C/C++ compiler:
 

@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import RoomMap from './components/RoomMap.vue'
 import CommandHelp from './components/CommandHelp.vue'
 import { download, useSession } from './engine/session'
+import { version as appVersion } from '../package.json'
 
 const session = useSession()
 const { map, transcript, status, upper, request, state, error, notice, storyName, version, storyData, canCommand } = session
@@ -105,7 +106,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
     <div class="screw top-left" aria-hidden="true" /><div class="screw top-right" aria-hidden="true" />
     <header class="hardware-header">
       <div class="brand"><span class="brand-mark" aria-hidden="true">W/F</span><div><h1>WEBFROTZ</h1><p>DEEP-SPACE STORY TERMINAL</p></div></div>
-      <div class="serial">PERSONAL EXPLORATION SYSTEM<br /><span>MODEL II / C · REV 001</span></div>
+      <div class="serial">PERSONAL EXPLORATION SYSTEM<br /><span>MODEL II / C · V{{ appVersion }}</span></div>
       <button class="help-button" @click="helpOpen = true">Help</button>
       <button class="load-button" @click="storyPicker?.click()">Load story <span aria-hidden="true">↥</span></button>
       <input ref="storyPicker" type="file" accept=".z1,.z2,.z3,.z5" class="file-input" aria-label="Load story file" @change="selected($event, false)" />

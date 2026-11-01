@@ -1,6 +1,6 @@
 {
   "name": "webfrotz",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "license": "GPL-2.0-or-later",
@@ -12,7 +12,9 @@
     "fixtures": "python tests/make_browser_story.py public/fixtures",
     "test": "vitest run",
     "test:portable:wasm": "python tools/test_portable_wasm.py",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "screenshot": "node tools/capture_readme.mjs",
+    "package:release": "python tools/package_release.py dist .build/releases"
   },
   "dependencies": {
     "three": "0.180.0",

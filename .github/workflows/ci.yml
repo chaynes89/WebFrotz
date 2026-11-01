@@ -44,6 +44,7 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - run: npm run package:release -- --source-ref "$GITHUB_SHA"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -53,3 +54,7 @@ jobs:
         with:
           name: webfrotz-static-site
           path: dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webfrotz-release-assets
+          path: .build/releases/*.zip
