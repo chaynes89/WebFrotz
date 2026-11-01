@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import RoomMap from './components/RoomMap.vue'
+import CommandHelp from './components/CommandHelp.vue'
 import { download, useSession } from './engine/session'
 
 const session = useSession()
-const { map, transcript, status, upper, request, state, error, notice, storyName, version, canCommand } = session
+const { map, transcript, status, upper, request, state, error, notice, storyName, version, storyData, canCommand } = session
+const helpOpen = ref(false)
 const expanded = ref(false)
 const command = ref('')
 const input = ref<HTMLInputElement>()
@@ -21,6 +23,7 @@ const phase = computed(() => request.value?.kind === 'restore' ? 'AWAITING SAVE 
   request.value ? 'AWAITING INPUT' : state.value.toUpperCase())
 
 function keyboard(event: KeyboardEvent) {
+  if (helpOpen.value || restarting.value) return
   if (event.ctrlKey && event.key.toLowerCase() === 'm') {
     event.preventDefault()
     expanded.value = !expanded.value
@@ -76,7 +79,7 @@ function restart() {
   command.value = ''
 }
 watch(request, async active => {
-  if (active && active.kind !== 'restore') {
+  if (active && active.kind !== 'restore' && !helpOpen.value) {
     await nextTick()
     input.value?.focus()
   }
@@ -103,6 +106,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
     <header class="hardware-header">
       <div class="brand"><span class="brand-mark" aria-hidden="true">W/F</span><div><h1>WEBFROTZ</h1><p>DEEP-SPACE STORY TERMINAL</p></div></div>
       <div class="serial">PERSONAL EXPLORATION SYSTEM<br /><span>MODEL II / C · REV 001</span></div>
+      <button class="help-button" @click="helpOpen = true">Help</button>
       <button class="load-button" @click="storyPicker?.click()">Load story <span aria-hidden="true">↥</span></button>
       <input ref="storyPicker" type="file" accept=".z1,.z2,.z3,.z5" class="file-input" aria-label="Load story file" @change="selected($event, false)" />
     </header>
@@ -178,6 +182,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
         <button @click="restarting = false" autofocus>Keep exploring</button>
         <button @click="restart">Restart story</button>
     </dialog>
+    <CommandHelp :open="helpOpen" :story="storyData" :story-name="storyName" :version="version" @close="helpOpen = false" />
   </main>
 </template>
 

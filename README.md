@@ -12,6 +12,19 @@ processed locally; there is no backend, analytics or story upload.
 
 - Type commands and press Enter. Up/Down recalls command history. Single-key
   prompts also work. The transcript is selectable, scrollable and exportable.
+- **Help** opens common example phrases without issuing a command or changing
+  the game. Story vocabulary stays hidden until you select **Reveal story
+  vocabulary (spoilers)**. Opening Help again hides it by default. The spoiler
+  warning explains that dictionary keys can expose unseen objects or puzzle clues.
+  Keys come from the loaded file's actual standard header dictionary for V1-V3/V5,
+  not a fabricated vocabulary or a list of guaranteed valid phrases. V1-V3 keys
+  have at most 6 encoded Z-characters; V5 has 9, so displayed keys can be truncated.
+  V5 custom alphabets and standard/custom ZSCII Unicode tables are supported.
+  Alternate dictionaries, custom parser vocabulary and runtime dictionary changes
+  are not inspected. Malformed tables, unsupported dictionary abbreviations or
+  character encodings produce an explicit Help error without stopping gameplay.
+  Extraction is read-only, local and performed only on explicit reveal; nothing
+  is sent, saved, added to the transcript or passed back into the C interpreter.
 - For **V1-V3**, rooms come from actual status-room events. Direction commands create map
   connections using the retained portable C++ model; dashed links indicate
   inferred movement. This is observation-based mapping, not a complete world model.
@@ -109,6 +122,18 @@ undo, replacement, stop, narrow layouts, WebGL fallback, V5 length scaling,
 V5 upper-window coordinates and explicit timed-input rejection. The fixture generator
 is a tiny bytecode assembler, not the application's interpreter.
 Screenshots are written to `test-results`.
+
+To test an update without changing the static files served by an existing
+unsaved preview, build into a separate directory and point browser tests at it:
+
+```powershell
+npx vue-tsc --noEmit
+node .\node_modules\vite\bin\vite.js build --outDir .build\help-preview
+$env:WEBFROTZ_TEST_DIST = ".build\help-preview"
+npm run test:browser
+```
+
+The test server uses port 4173, separate from the optional local preview on 4175.
 
 Native portable regressions need CMake 3.20+, Python and a C/C++ compiler:
 

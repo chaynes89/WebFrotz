@@ -120,6 +120,20 @@ def interactive(version, timed=False):
     for address, value in ((4, 0x600), (6, 0x600), (14, 0x600), (26, len(data) // (4 if version == 5 else 2))):
         data[address:address + 2] = value.to_bytes(2, "big")
     data[18:24] = b"WEB001"
+    dictionary_words = ["garden", "lamp", "lighthouse", "north", "secret", "south"]
+    resolution = 9 if version == 5 else 6
+    entry_length = 7 if version == 5 else 5
+    data[0x480:0x484] = bytes((0, entry_length, 0, len(dictionary_words)))
+    for index, word in enumerate(dictionary_words):
+        encoded = text(word[:resolution])
+        encoded += b"\x14\xa5" * ((resolution * 2 // 3 - len(encoded)) // 2)
+        # Dictionary fields have a fixed encoded length, with the end bit only on the last word.
+        encoded = bytearray(encoded)
+        for offset in range(0, len(encoded), 2):
+            encoded[offset] &= 0x7F
+        encoded[-2] |= 0x80
+        address = 0x484 + index * entry_length
+        data[address:address + len(encoded)] = encoded
     data[28:30] = (sum(data[64:]) & 0xFFFF).to_bytes(2, "big")
     return data
 

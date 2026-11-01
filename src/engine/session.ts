@@ -23,7 +23,7 @@ export function useSession() {
   const storyName = ref('')
   const version = ref(0)
   let worker: Worker | undefined
-  let story: ArrayBuffer | undefined
+  const storyData = shallowRef<ArrayBuffer>()
   let generation = 0
   let selection = 0
 
@@ -77,7 +77,7 @@ export function useSession() {
         case 'ended': state.value = 'ended'; request.value = undefined; break
       }
     }
-    post({ type: 'start', story: story!.slice(0), wasmBase: new URL(`${import.meta.env.BASE_URL}wasm/`, location.origin).href })
+    post({ type: 'start', story: storyData.value!.slice(0), wasmBase: new URL(`${import.meta.env.BASE_URL}wasm/`, location.origin).href })
   }
 
   async function load(file: File) {
@@ -87,7 +87,7 @@ export function useSession() {
       const data = await file.arrayBuffer()
       if (selection !== activeSelection) return false
       const v = validateStory(data)
-      story = data
+      storyData.value = data
       storyName.value = file.name
       version.value = v
       launch()
@@ -119,8 +119,8 @@ export function useSession() {
 
   onBeforeUnmount(stop)
   return {
-    map, transcript, status, upper, request, state, error, notice, storyName, version,
-    load, stop, submit, restore, restart: () => { if (story) launch() },
+    map, transcript, status, upper, request, state, error, notice, storyName, version, storyData,
+    load, stop, submit, restore, restart: () => { if (storyData.value) launch() },
     canCommand: computed(() => request.value?.kind === 'line'),
   }
 }

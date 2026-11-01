@@ -27,6 +27,7 @@ h1 { font-family: Arial, sans-serif; margin: 0; font-size: 28px; letter-spacing:
 .serial span { color: #69715f; }
 .load-button { background: #3c4939; color: #ede8d8; border: 1px solid #303d30; padding: 12px 19px; box-shadow: inset 0 1px 0 #61745b, 0 2px 3px #7775; font-weight: bold; }
 .load-button span { margin-left: 12px; }
+.help-button { color: #ede8d8; background: #3c4939; }
 .file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 .console { display: grid; grid-template-columns: minmax(300px, .9fr) minmax(400px, 1.3fr); grid-template-rows: minmax(390px, 52vh) auto; gap: 12px; background: #151f18; border: 8px solid #3e483d; border-radius: 7px; padding: 12px; box-shadow: inset 0 2px 8px #000a, 0 1px 0 #e2dfcb; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 13px; border-bottom: 1px solid var(--line); font-size: 10px; letter-spacing: 1.5px; color: #9cbd93; min-height: 45px; }
@@ -99,6 +100,17 @@ summary { cursor: pointer; }
 .confirm-panel h2 { font-size: 27px; }
 .confirm-panel p { font-size: 13px; line-height: 1.7; }
 .confirm-panel button { margin: 12px 8px 0 0; }
+.help-panel { max-width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; }
+.help-heading { display: flex; justify-content: space-between; align-items: start; gap: 15px; }
+.help-heading button { margin-top: 0; }
+.help-examples { display: grid; grid-template-columns: max-content 1fr; gap: 12px 20px; font-size: 13px; line-height: 1.6; }
+.help-examples dt { color: var(--amber); }
+.help-examples dd { margin: 0; }
+.vocabulary-help { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 12px; }
+.vocabulary-help h3 { color: #ede5c9; font-size: 16px; }
+.spoiler-warning { color: var(--amber); }
+.vocabulary-words { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
+.vocabulary-words li { border: 1px solid var(--line); padding: 5px 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 @media (min-width: 1600px) { .hardware { margin-top: 45px; } }
 @media (max-width: 1000px) {
   .hardware { margin: 12px; padding: 22px 16px 18px; }
@@ -115,6 +127,9 @@ summary { cursor: pointer; }
   .brand p { font-size: 7px; letter-spacing: 1px; }
   .brand-mark { display: none; }
   .load-button { padding: 10px 12px; font-size: 11px; }
+  .help-panel { padding: 18px; }
+  .help-examples { grid-template-columns: 1fr; gap: 5px; }
+  .help-examples dd { margin-bottom: 10px; }
   .console { grid-template-columns: 1fr; grid-template-rows: auto minmax(290px, 40vh) auto; border-width: 4px; padding: 6px; }
   .briefing-body { padding: 14px; }
   .briefing h2, .briefing .intro, .briefing .eyebrow, .vent { display: none; }

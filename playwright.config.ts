@@ -10,7 +10,7 @@ export default defineConfig({
     reducedMotion: 'reduce',
   },
   webServer: {
-    command: 'npm run preview -- --port 4173 --strictPort',
+    command: `node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173 --strictPort --outDir ${JSON.stringify(process.env.WEBFROTZ_TEST_DIST || 'dist')}`,
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: false,
     timeout: 30000,
