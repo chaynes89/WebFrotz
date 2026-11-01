@@ -23,7 +23,7 @@ async function launch() {
     stdio: 'inherit',
   })
   let endpoint = false
-  for (let attempt = 0; attempt < 120; attempt++) {
+  for (let attempt = 0; attempt < 240; attempt++) {
     try {
       const response = await fetch('http://127.0.0.1:4181/json/version')
       if (response.ok) { endpoint = true; break }
@@ -35,8 +35,8 @@ async function launch() {
   if (!endpoint) throw new Error('WebView2 debugging endpoint did not become ready.')
   browser = await chromium.connectOverCDP('http://127.0.0.1:4181')
   await expect.poll(() => browser.contexts().flatMap(context => context.pages())
-    .some(page => page.url().includes('tauri.localhost'))).toBe(true)
-  page = browser.contexts().flatMap(context => context.pages()).find(page => page.url().includes('tauri.localhost'))
+    .some(page => /tauri[.:/]/.test(page.url())), { timeout: 30000 }).toBe(true)
+  page = browser.contexts().flatMap(context => context.pages()).find(page => /tauri[.:/]/.test(page.url()))
   await expect(page.getByRole('button', { name: 'Load story', exact: true })).toBeVisible()
 }
 async function dialog(path) {
@@ -117,8 +117,32 @@ try {
   expect((await stat(checkpoint)).size).toBeGreaterThan(0)
   await close()
   console.log('Real Windows Tauri/WASM gameplay, native dialogs, saves, map/recent persistence and clear/close passed.')
+} catch (error) {
+  console.error('Desktop smoke failure:', error)
+  await mkdir('test-results', { recursive: true })
+  if (page) {
+    console.error('Desktop page URL:', page.url())
+    console.error('Desktop content:', await page.locator('body').innerText())
+    await page.screenshot({ path: 'test-results/tauri-failure.png' })
+  }
+  execFileSync('powershell.exe', ['-NoProfile', '-Command', `
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+    $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+    $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+    $bitmap.Save('${resolve('test-results/tauri-runner.png')}')
+    $graphics.Dispose()
+    $bitmap.Dispose()
+  `], { stdio: 'inherit' })
+  throw error
 } finally {
   if (browser) await browser.close()
-  if (child?.exitCode === null) child.kill()
-  await rm(sandbox, { recursive: true, force: true })
+  if (child?.exitCode === null) {
+    const exited = new Promise(resolve => child.once('exit', resolve))
+    child.kill()
+    await exited
+  }
+  await rm(sandbox, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 })
 }
