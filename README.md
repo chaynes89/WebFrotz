@@ -12,6 +12,10 @@ processed locally; there is no backend, analytics or story upload.
 
 - Type commands and press Enter. Up/Down recalls command history. Single-key
   prompts also work. The transcript is selectable, scrollable and exportable.
+  Desktop panels adapt to the viewport height, keeping the command bar visible
+  in both docked and expanded map views. Transcript, system content, room directory
+  and Help scroll inside their panels. Narrow/mobile screens keep a stacked layout
+  with page scrolling where needed.
 - **Help** opens common example phrases without issuing a command or changing
   the game. Story vocabulary stays hidden until you select **Reveal story
   vocabulary (spoilers)**. Opening Help again hides it by default. The spoiler
@@ -118,7 +122,8 @@ npm run test:browser
 Browser tests run against the production build, load generated original V1-V3/V5
 stories, and execute real Z-machine instructions through WASM. They cover text,
 status score/moves, movement/map links, toggle, restart, save/restore/cancel,
-undo, replacement, stop, narrow layouts, WebGL fallback, V5 length scaling,
+undo, replacement, stop, viewport-height desktop and narrow layouts, Help and
+spoiler-gated vocabulary, WebGL fallback, V5 length scaling,
 V5 upper-window coordinates and explicit timed-input rejection. The fixture generator
 is a tiny bytecode assembler, not the application's interpreter.
 Screenshots are written to `test-results`.

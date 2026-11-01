@@ -100,7 +100,7 @@ summary { cursor: pointer; }
 .confirm-panel h2 { font-size: 27px; }
 .confirm-panel p { font-size: 13px; line-height: 1.7; }
 .confirm-panel button { margin: 12px 8px 0 0; }
-.help-panel { max-width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; }
+.help-panel { max-width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow: auto; }
 .help-heading { display: flex; justify-content: space-between; align-items: start; gap: 15px; }
 .help-heading button { margin-top: 0; }
 .help-examples { display: grid; grid-template-columns: max-content 1fr; gap: 12px 20px; font-size: 13px; line-height: 1.6; }
@@ -147,6 +147,27 @@ summary { cursor: pointer; }
   .command-line button span { display: none; }
   .restore-prompt { flex-wrap: wrap; }
   .panel-heading { letter-spacing: 1px; padding: 9px; font-size: 9px; }
+}
+@media (min-width: 721px) {
+  .hardware {
+    --frame-gap: clamp(8px, 2vh, 28px);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: calc(100% - 24px);
+    height: calc(100vh - 2 * var(--frame-gap));
+    height: calc(100dvh - 2 * var(--frame-gap));
+    margin: var(--frame-gap) auto;
+  }
+  .console { min-height: 0; grid-template-rows: minmax(0, 1.3fr) minmax(0, 1fr); }
+  .map-expanded { grid-template-rows: minmax(0, 1.65fr) minmax(0, 1fr); }
+  .briefing, .map-panel { min-height: 0; }
+  .map-display { min-height: 0; }
+  .panel-heading, .map-instruments, .status-line, .command-line { flex-shrink: 0; }
+  .map-directory { min-height: 36px; max-height: min(140px, 18vh); flex-shrink: 1; }
+  .transcript-panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .transcript { flex: 1; height: auto; min-height: 0; max-height: none; }
+  .upper-window { min-height: 0; max-height: 12vh; overflow: auto; flex-shrink: 1; }
+  .alert, .notice, .restore-prompt { max-height: 25%; overflow: auto; flex-shrink: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
