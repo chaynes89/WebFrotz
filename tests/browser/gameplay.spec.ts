@@ -143,3 +143,32 @@ test('single-key input, command history and keyboard-accessible restart confirma
   await expect(page.locator('.map-panel .panel-heading')).toContainText('001 NODES')
   await expect(page.locator('.current-location')).toHaveText('foyer')
 })
+
+test('map titles use a smaller font and tightly measured text-dependent boxes', async ({ page }) => {
+  await page.addInitScript(() => {
+    const records: Array<{ text: string; width: number; height: number; measured: number; font: string }> = []
+    Object.defineProperty(window, '__mapTitleMeasurements', { value: records })
+    const fillText = CanvasRenderingContext2D.prototype.fillText
+    CanvasRenderingContext2D.prototype.fillText = function (text, x, y, maxWidth) {
+      records.push({ text, width: this.canvas.width, height: this.canvas.height,
+        measured: this.measureText(text).width, font: this.font })
+      if (maxWidth === undefined) fillText.call(this, text, x, y)
+      else fillText.call(this, text, x, y, maxWidth)
+    }
+  })
+  await load(page)
+  await command(page, 'north')
+  await expect(page.locator('.current-location')).toHaveText('garden')
+  const titles: Array<{ text: string; width: number; height: number; measured: number; font: string }> =
+    await page.evaluate(() => Reflect.get(window, '__mapTitleMeasurements'))
+  const foyer = titles.find(title => title.text === 'foyer')!
+  const garden = titles.find(title => title.text === 'garden')!
+  for (const title of [foyer, garden]) {
+    expect(title.font).toBe('18px monospace')
+    expect(title.width).toBe((Math.ceil(title.measured) + 20) * 2)
+    expect(title.height).toBe(64)
+    expect(title.width).toBeLessThan(200)
+  }
+  expect(garden.width).toBeGreaterThan(foyer.width)
+  await expect(page.locator('.map-failure')).toHaveCount(0)
+})

@@ -35,21 +35,29 @@ function disposeGroup(group: THREE.Group) {
 
 function label(text: string, active: boolean) {
   const canvas = document.createElement('canvas')
-  canvas.width = 512; canvas.height = 96
   const context = canvas.getContext('2d')
   if (!context) throw new Error('Map labels require a canvas context.')
+  const font = '18px monospace'
+  context.font = font
+  const width = Math.ceil(context.measureText(text).width) + 20
+  const height = 32
+  const resolution = 2
+  canvas.width = width * resolution
+  canvas.height = height * resolution
+  context.scale(resolution, resolution)
   context.fillStyle = '#101b15'
-  context.fillRect(0, 0, 512, 96)
+  context.fillRect(0, 0, width, height)
   context.strokeStyle = active ? '#eec381' : '#426b48'
-  context.strokeRect(1, 1, 510, 94)
+  context.strokeRect(0.5, 0.5, width - 1, height - 1)
   context.fillStyle = active ? '#f4d7a4' : '#b7eab2'
-  context.font = '26px monospace'
+  context.font = font
   context.textAlign = 'center'
-  context.fillText(text, 256, 59, 480)
+  context.textBaseline = 'middle'
+  context.fillText(text, width / 2, height / 2)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }))
-  sprite.scale.set(3.4, 0.64, 1)
+  sprite.scale.set(width * 0.008, height * 0.008, 1)
   return sprite
 }
 
@@ -76,7 +84,7 @@ function rebuild() {
       )
       node.position.copy(position(room))
       const caption = label(room.label, active)
-      caption.position.copy(node.position).add(new THREE.Vector3(0, 0.7, 0))
+      caption.position.copy(node.position).add(new THREE.Vector3(0, 0.45, 0))
       rooms.add(node, caption)
     })
     render()

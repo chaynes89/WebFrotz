@@ -18,6 +18,8 @@ processed locally; there is no backend, analytics or story upload.
   **V5 does not provide these room events**: its story-defined upper window is
   displayed as text, and the map explicitly reports that automatic mapping is
   unavailable. No room identities are guessed from prose, globals or status text.
+  Map title boxes fit each label's measured text with compact padding and a
+  smaller font, rather than reserving a fixed-width panel for every room.
 - **Ctrl+M** or **Expand map** toggles the upper-right docked map and expanded
   view. The transcript remains full width below it. Drag to rotate, right-drag
   to pan and wheel to zoom. Focus the map for arrow-key panning; buttons provide
