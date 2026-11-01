@@ -86,6 +86,8 @@ jobs:
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
       - run: npm run desktop:build -- --ci -- --locked
       - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+      - name: Build optimized native smoke app with CI-only debugging
+        run: npm run desktop:build -- --ci --no-bundle --features desktop-smoke --config src-tauri/tauri.smoke.conf.json -- --locked
       - run: node tools/test_desktop.mjs
       - run: python tools/package_release.py .build/desktop-dist .build/desktop-source --source-ref "${{ github.sha }}"
       - uses: actions/upload-artifact@v4

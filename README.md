@@ -171,13 +171,15 @@ Redistribute the matching corresponding source and all notices, not just the
 installer; see [DEPENDENCIES.md](DEPENDENCIES.md).
 
 Windows CI builds the actual NSIS installer, runs Rust storage regressions and
-launches the **release Tauri executable/WebView2**, loading a generated story
+launches an **optimized Tauri executable/WebView2**, loading a generated story
 through the real native picker. It exercises WASM gameplay, map toggle, native
 save/restore/export, close/reopen persistence, restart and clearing history.
-Its isolated CDP port **4181** is enabled only on the disposable CI runner,
-using an executable-specific machine policy because elevated WebView2 150+
-ignores environment flags; the policy is removed after the test. Production
-does not enable a debugging port. Browser adapter tests separately
+After building the production installer, CI compiles a separate, unbundled
+`desktop-smoke` variant with `tauri.smoke.conf.json`: the only differences are
+DevTools support and CDP port **4181**, passed through the WebView2 API because
+elevated WebView2 150+ ignores environment flags. The distributed installer
+uses the original configuration and does not enable a debugging port.
+Browser adapter tests separately
 mock native IPC but run the actual WASM map-import path.
 The local implementation machine lacked MSVC/Windows SDK; local checks cover
 TypeScript, real WASM/portable regressions and browser interaction, while the

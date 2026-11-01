@@ -15,19 +15,6 @@ const transcript = join(sandbox, 'transcript.txt')
 let child
 let browser
 let page
-const policy = 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge\\WebView2'
-function configureDebugPolicy(enabled) {
-  // WebView2 150+ ignores environment overrides in elevated hosted runners.
-  execFileSync('powershell.exe', ['-NoProfile', '-Command', enabled ? `
-    New-Item -Path '${policy}\\AdditionalBrowserArguments' -Force | Out-Null
-    New-ItemProperty -Path '${policy}\\AdditionalBrowserArguments' -Name 'webfrotz-desktop.exe' -Value '--remote-debugging-port=4181' -PropertyType String -Force | Out-Null
-    New-Item -Path '${policy}\\UserDataFolder' -Force | Out-Null
-    New-ItemProperty -Path '${policy}\\UserDataFolder' -Name 'webfrotz-desktop.exe' -Value '${join(sandbox, 'webview')}' -PropertyType String -Force | Out-Null
-  ` : `
-    Remove-ItemProperty -Path '${policy}\\AdditionalBrowserArguments' -Name 'webfrotz-desktop.exe' -ErrorAction Stop
-    Remove-ItemProperty -Path '${policy}\\UserDataFolder' -Name 'webfrotz-desktop.exe' -ErrorAction Stop
-  `], { stdio: 'inherit' })
-}
 async function launch() {
   child = spawn(resolve('src-tauri/target/release/webfrotz-desktop.exe'), [], {
     env: { ...process.env, LOCALAPPDATA: sandbox, APPDATA: sandbox,
@@ -38,7 +25,6 @@ async function launch() {
   let endpoint = false
   for (let attempt = 0; attempt < 240; attempt++) {
     try {
-      configureDebugPolicy(true)
       const response = await fetch('http://127.0.0.1:4181/json/version')
       if (response.ok) { endpoint = true; break }
     } catch {
@@ -159,5 +145,4 @@ try {
     await exited
   }
   await rm(sandbox, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 })
-  configureDebugPolicy(false)
 }

@@ -1,0 +1,18 @@
+{
+  "build": {
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "windows": [{
+      "label": "main",
+      "title": "WebFrotz desktop CI",
+      "width": 1280,
+      "height": 960,
+      "minWidth": 640,
+      "minHeight": 640,
+      "dragDropEnabled": false,
+      "additionalBrowserArgs": "--remote-debugging-port=4181",
+      "devtools": true
+    }]
+  }
+}
