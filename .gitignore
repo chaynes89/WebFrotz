@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.build/
+public/wasm/
+public/fixtures/
+test-results/
+playwright-report/
+__pycache__/
+public/COPYING.txt
+*.sav
+*.aux
+*.rec

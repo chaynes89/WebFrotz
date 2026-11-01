@@ -1,0 +1,55 @@
+name: WebFrotz
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: cmake -S . -B .build/portable -DBUILD_TESTING=ON
+      - run: cmake --build .build/portable --parallel 2
+      - run: ctest --test-dir .build/portable --output-on-failure
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: '4.0.18'
+          actions-cache-folder: emsdk-cache
+      - run: npm ci
+      - run: npm run build:wasm
+      - run: npm run test:portable:wasm
+      - run: npm run fixtures
+      - run: npm run build
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: test-results/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webfrotz-static-site
+          path: dist/
