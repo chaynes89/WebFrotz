@@ -1,8 +1,12 @@
 // WebFrotz browser ABI, 2026-11-01. GPL-2.0-or-later; see COPYING.
 #include "../Frontend/AutoMap.h"
 #include <emscripten.h>
+#include <codecvt>
+#include <locale>
 
 static Frontend::AutoMap model;
+static Frontend::AutoMap imported;
+static bool import_pending;
 static std::u16string room_name;
 static uint32_t room_id;
 static bool capturing;
@@ -16,8 +20,10 @@ static void publish()
         EM_ASM({
             let label = "";
             for (let p = $1 >> 1; HEAPU16[p]; p++) label += String.fromCharCode(HEAPU16[p]);
-            Module.host.room($0, label, $2, $3, $4);
-        }, room.object, room.label.c_str(), room.x, room.y, room.z);
+            let name = "";
+            for (let p = $5 >> 1; HEAPU16[p]; p++) name += String.fromCharCode(HEAPU16[p]);
+            Module.host.room($0, label, $2, $3, $4, name);
+        }, room.object, room.label.c_str(), room.x, room.y, room.z, room.name.c_str());
     }
     for (const auto& connection : model.Connections())
         EM_ASM({ Module.host.connection($0, $1, !!$2, !!$3); },
@@ -26,6 +32,18 @@ static void publish()
 }
 
 extern "C" {
+void web_map_import_room(uint32_t object, const char* name, int x, int y, int z)
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+    imported.ImportRoom(object,convert.from_bytes(name),x,y,z);
+    import_pending = true;
+}
+
+void web_map_import_connection(int from, int to, int inferred)
+{
+    imported.ImportConnection(from,to,inferred != 0);
+}
+
 void os_begin_status_room(uint32_t room)
 {
     room_id = room;
@@ -63,7 +81,14 @@ void os_command_submitted(const uint16_t* command)
 void os_game_state_changed(int reason)
 {
     if (reason == 1)
+    {
         model.Reset();
+        if (import_pending)
+        {
+            model = std::move(imported);
+            import_pending = false;
+        }
+    }
     else
         model.Restore();
     publish();

@@ -4,6 +4,7 @@ for (const width of [320, 350, 351, 360, 390, 720, 721, 1000, 1001, 1024, 1440, 
   test(`compact header fits and remains usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/')
+    await expect(page.locator('.hardware-header')).toHaveCSS('display', 'flex')
 
     const help = page.getByRole('button', { name: 'Help', exact: true })
     const load = page.getByRole('button', { name: 'Load story', exact: true })

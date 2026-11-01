@@ -48,6 +48,8 @@ h2 em { color: #aec49a; font-style: normal; }
 .telemetry small { font-size: 9px; color: #8fa782; margin-left: 10px; }
 .system-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 17px; }
 .operation-note { font-size: 10px; color: #9aaa90; line-height: 1.6; }
+.local-library { margin-top: 12px; font-size: 11px; line-height: 1.6; }
+.local-library button { display: block; max-width: 100%; margin-top: 6px; overflow-wrap: anywhere; text-align: left; }
 .vent { display: flex; gap: 6px; margin-top: 15px; }
 .vent i { width: 17px; height: 3px; background: #0c160f; box-shadow: 0 1px 0 #3b4a37; }
 .map-panel { display: flex; flex-direction: column; min-width: 0; border: 1px solid #496144; background: #0c1610; overflow: hidden; }
@@ -90,6 +92,8 @@ summary { cursor: pointer; }
 .notice, .restore-prompt { background: #292c1d; color: #e6d4aa; }
 .hardware-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 17px; padding: 0 5px; font-size: 8px; line-height: 1.6; color: #49513f; letter-spacing: .3px; }
 .hardware-footer .led { width: 5px; height: 5px; background: #566c44; box-shadow: none; }
+.footer-link { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; }
+.license-text { font: inherit; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .screw { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #888c7c; border: 1px solid #767b69; box-shadow: inset 0 1px 2px #4e5544, 0 1px 0 #e4e1cd; }
 .screw::after { content: ""; display: block; width: 5px; height: 1px; background: #4a5344; transform: rotate(-35deg); margin: 3px 0; }
 .top-left { top: 12px; left: 12px; } .top-right { top: 12px; right: 12px; } .bottom-left { bottom: 10px; left: 12px; } .bottom-right { bottom: 10px; right: 12px; }

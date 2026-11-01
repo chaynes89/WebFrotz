@@ -53,6 +53,31 @@ void AutoMap::Restore()
   ClearCommand();
 }
 
+void AutoMap::ImportRoom(RoomId object, const std::u16string& name, int x, int y, int z)
+{
+  if (object == 0 || m_roomIndex.count(object) ||
+      m_positions.count(std::make_tuple(x,y,z)))
+    throw std::invalid_argument("Invalid persisted room");
+  const auto index = m_rooms.size();
+  m_rooms.push_back({object, {}, {}, x, y, z});
+  m_nameKeys.emplace_back();
+  m_roomIndex.emplace(object,index);
+  m_positions.insert(std::make_tuple(x,y,z));
+  ChangeName(index,name,LowerAscii(name));
+  Restore();
+}
+
+void AutoMap::ImportConnection(std::size_t from, std::size_t to, bool inferred)
+{
+  if (from >= m_rooms.size() || to >= m_rooms.size() || from == to)
+    throw std::invalid_argument("Invalid persisted connection");
+  const auto key = std::make_pair(std::min(from,to),std::max(from,to));
+  if (m_connectionIndex.count(key))
+    throw std::invalid_argument("Duplicate persisted connection");
+  m_connectionIndex.emplace(key,m_connections.size());
+  m_connections.push_back({from, to, m_rooms[from].z != m_rooms[to].z, inferred});
+}
+
 void AutoMap::SubmitCommand(const std::u16string& command)
 {
   ClearCommand();

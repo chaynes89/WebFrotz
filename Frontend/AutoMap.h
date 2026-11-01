@@ -37,6 +37,8 @@ public:
 
   void Reset();
   void Restore();
+  void ImportRoom(RoomId object, const std::u16string& name, int x, int y, int z);
+  void ImportConnection(std::size_t from, std::size_t to, bool inferred);
   void SubmitCommand(const std::u16string& command);
   bool ObserveRoom(RoomId object, const std::u16string& name);
   bool ObserveRoom(RoomId object, const std::u16string& name, const std::u16string& nameKey);

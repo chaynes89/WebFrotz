@@ -1,6 +1,7 @@
 export interface MapRoom {
   object: number
   label: string
+  name?: string
   x: number
   y: number
   z: number
@@ -22,7 +23,7 @@ export interface InputRequest {
   max: number
 }
 export type ToEngine =
-  | { type: 'start'; story: ArrayBuffer; wasmBase: string }
+  | { type: 'start'; story: ArrayBuffer; wasmBase: string; map?: MapSnapshot }
   | { type: 'input'; id: number; text: string; key: number }
   | { type: 'restore'; id: number; data: ArrayBuffer | null }
 

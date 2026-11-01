@@ -153,6 +153,36 @@ void InvalidIdentity()
   REQUIRE(map.Rooms().empty());
 }
 
+void PersistedDiscoveries()
+{
+  AutoMap map;
+  map.ImportRoom(1,u"Hall",0,0,0);
+  map.ImportRoom(2,u"HALL",0,-1,0);
+  map.ImportRoom(3,u"Loft",0,-1,1);
+  map.ImportConnection(0,1,false);
+  map.ImportConnection(1,2,true);
+  REQUIRE(map.CurrentRoom() == AutoMap::NoRoom);
+  REQUIRE(map.Rooms()[0].label == u"Hall (#1)");
+  REQUIRE(map.Connections()[1].vertical);
+  map.ObserveRoom(1,u"Hall");
+  REQUIRE(map.Connections().size() == 2);
+  map.SubmitCommand(u"east");
+  map.ObserveRoom(4,u"New room");
+  REQUIRE(map.Rooms()[3].x == 1);
+  REQUIRE(map.Rooms()[3].y == 0);
+  REQUIRE(map.Connections().size() == 3);
+  bool rejected = false;
+  try { map.ImportRoom(4,u"Duplicate",8,8,8); }
+  catch (const std::invalid_argument&) { rejected = true; }
+  REQUIRE(rejected);
+  rejected = false;
+  try { map.ImportConnection(0,99,false); }
+  catch (const std::invalid_argument&) { rejected = true; }
+  REQUIRE(rejected);
+  map.Reset();
+  REQUIRE(map.Rooms().empty());
+}
+
 int main()
 {
   try
@@ -164,6 +194,7 @@ int main()
     Labels();
     CollisionsAndLargeMap();
     InvalidIdentity();
+    PersistedDiscoveries();
     std::cout << "Auto-map regression tests passed\n";
     return 0;
   }

@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -15,6 +16,8 @@ def main():
     parser.add_argument("dist", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--source-ref", default="HEAD")
+    parser.add_argument("--install-notices", action="store_true",
+                        help="Also install notices/source information in the served site.")
     args = parser.parse_args()
     version = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))["version"]
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
@@ -37,6 +40,7 @@ def main():
     notices = {
         "licenses/vue-MIT.txt": ROOT / "node_modules" / "vue" / "LICENSE",
         "licenses/three-MIT.txt": ROOT / "node_modules" / "three" / "LICENSE",
+        "licenses/tauri-api-MIT.txt": ROOT / "docs" / "licenses" / "tauri-MIT.txt",
         "licenses/emscripten.txt": sdk / "LICENSE",
         "licenses/musl.txt": sdk / "system" / "lib" / "libc" / "musl" / "COPYRIGHT",
         "licenses/libcxx.txt": sdk / "system" / "lib" / "libcxx" / "LICENSE.TXT",
@@ -56,11 +60,10 @@ def main():
         "git", "archive", "--format=zip", f"--prefix=WebFrotz-{version}/",
         f"--output={output / source_name}", commit,
     ], cwd=ROOT, check=True)
-    release_url = f"https://github.com/chaynes89/WebFrotz/releases/tag/v{version}"
     source_notice = (
         f"WebFrotz {version}\nSource commit: {commit}\n\n"
         "GPL-2.0-or-later; no warranty. Retain COPYING.txt and all notices.\n"
-        f"Download the matching {source_name} alongside this static archive:\n{release_url}\n"
+        f"The matching {source_name} is supplied alongside this build in its CI artifact or release.\n"
         f"Versioned source: https://github.com/chaynes89/WebFrotz/tree/{commit}\n\n"
         "README.md contains build instructions; DEPENDENCIES.md identifies runtime licenses and sources.\n"
         "Redistributors must provide corresponding source, not only the compiled application.\n"
@@ -68,13 +71,21 @@ def main():
         "Only generated original fixture stories are included. No commercial games are bundled.\n"
     )
     static_name = f"webfrotz-{version}-static.zip"
+    if args.install_notices:
+        for name, path in notices.items():
+            target = dist / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target)
+        (dist / "SOURCE.txt").write_text(source_notice, encoding="utf-8")
     with ZipFile(output / static_name, "w", compression=ZIP_DEFLATED) as archive:
         for path in sorted(dist.rglob("*")):
             if path.is_file():
                 archive.write(path, path.relative_to(dist).as_posix())
         for name, path in notices.items():
-            archive.write(path, name)
-        archive.writestr("SOURCE.txt", source_notice)
+            if not (dist / name).is_file():
+                archive.write(path, name)
+        if not (dist / "SOURCE.txt").is_file():
+            archive.writestr("SOURCE.txt", source_notice)
     print(f"Packaged {static_name} and {source_name} from {commit}")
 
 

@@ -1,5 +1,6 @@
 import { emptyMap, type FromEngine, type InputRequest, type MapSnapshot, type ToEngine } from './protocol'
 import { validateStory } from './story'
+import { validatePersistedMap } from './persistedMap'
 
 interface FrotzModule {
   FS: {
@@ -8,7 +9,7 @@ interface FrotzModule {
     unlink(path: string): void
     analyzePath(path: string): { exists: boolean }
   }
-  ccall(name: string, result: string, args: string[], values: unknown[], options: { async: true }): Promise<number>
+  ccall(name: string, result: string | null, args: string[], values: unknown[], options?: { async: true }): Promise<number> | number
 }
 type Factory = (options: Record<string, unknown>) => Promise<FrotzModule>
 
@@ -90,7 +91,7 @@ const host = {
     if (window === 1) { upperHeight = Math.max(0, Math.min(30 - statusRows, height)); dirtyScreen = true }
   },
   beginMap(current: number) { snapshot = { current, rooms: [], connections: [] } },
-  room(object: number, label: string, x: number, y: number, z: number) { snapshot.rooms.push({ object, label, x, y, z }) },
+  room(object: number, label: string, x: number, y: number, z: number, name: string) { snapshot.rooms.push({ object, label, x, y, z, name }) },
   connection(from: number, to: number, vertical: boolean, inferred: boolean) { snapshot.connections.push({ from, to, vertical, inferred }) },
   endMap() { send({ type: 'map', map: snapshot }) },
   state(reason: number) {
@@ -151,6 +152,15 @@ self.onmessage = async (event: MessageEvent<ToEngine>) => {
         onAbort: (message: unknown) => fail(message),
       })
       engine.FS.writeFile('/story.z', new Uint8Array(message.story))
+      if (message.map && statusRows === 1) {
+        const saved = validatePersistedMap(message.map)
+        for (const room of saved.rooms)
+          engine.ccall('web_map_import_room', null, ['number', 'string', 'number', 'number', 'number'],
+            [room.object, room.name, room.x, room.y, room.z])
+        for (const link of saved.connections)
+          engine.ccall('web_map_import_connection', null, ['number', 'number', 'number'],
+            [link.from, link.to, Number(link.inferred)])
+      }
       await engine.ccall('web_run', 'number', [], [], { async: true })
       flush()
       send({ type: 'ended' })

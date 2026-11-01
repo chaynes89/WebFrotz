@@ -14,3 +14,5 @@ public/COPYING.txt
 *.zblorb
 *.blorb
 *.ulx
+src-tauri/target/
+src-tauri/gen/

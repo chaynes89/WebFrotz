@@ -8,19 +8,25 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "desktop:frontend": "vue-tsc --noEmit && vite build --base / --outDir .build/desktop-dist",
     "build:wasm": "python tools/build_wasm.py",
     "fixtures": "python tests/make_browser_story.py public/fixtures",
     "test": "vitest run",
     "test:portable:wasm": "python tools/test_portable_wasm.py",
     "test:browser": "playwright test",
     "screenshot": "node tools/capture_readme.mjs",
+    "test:pages": "node tools/test_pages.mjs",
     "package:release": "python tools/package_release.py dist .build/releases"
   },
   "dependencies": {
+    "@tauri-apps/api": "2.12.4",
     "three": "0.180.0",
     "vue": "3.5.44"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "2.12.4",
     "@playwright/test": "1.64.1",
     "@types/node": "26.6.6",
     "@types/three": "0.180.0",

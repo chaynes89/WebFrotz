@@ -10,6 +10,10 @@ Three.js**, executing the **actual Frotz C interpreter in WebAssembly**.
 The populated map, room labels and vertical link come from the C interpreter
 and portable map model, not a mockup. No commercial story text is shown.*
 
+**[Play WebFrotz in your browser](https://chaynes89.github.io/WebFrotz/)** —
+load a story you are entitled to play. Game data stays in your browser;
+GitHub Pages serves only the static app, WASM and original generated fixtures.
+
 ## Download 1.0
 
 Get **[WebFrotz 1.0](https://github.com/chaynes89/WebFrotz/releases/tag/v1.0.0)**.
@@ -79,8 +83,107 @@ processed locally; there is no backend, analytics or story upload.
   Successful restore/undo retains discovered rooms but discards pending traversal.
   In V5, undo depends on the story creating undo checkpoints; unavailable undo
   is reported by the core.
-  **Maps are session-only and are not included in saves.** Reloading the page
+  **Browser maps are session-only and are not included in saves.** Reloading the page
   discards them; keep downloaded saves to retain game progress.
+
+## Windows desktop (Tauri 2)
+
+The optional **Tauri 2** app embeds the same Vue/Three.js frontend, Web Worker
+and real C/WASM interpreter. It is not a separate interpreter port. The browser
+build and its session-only persistence remain unchanged.
+
+Each passing `main` CI run produces a **webfrotz-windows-installer** artifact
+containing an x64 per-user NSIS installer and the matching source zip. This is
+a development artifact, not a new tagged release. Download it from
+[Actions](https://github.com/chaynes89/WebFrotz/actions), extract it and run the
+setup executable. **No Node, Python, Rust, Emscripten or local HTTP server is
+needed on the player's machine.** The installer includes Microsoft's signed
+WebView2 offline installer for machines without the runtime; installation and
+gameplay do not require downloading app assets. WebView2 may separately update
+itself when online. The WebFrotz installer is currently unsigned: Windows may
+show SmartScreen/unknown-publisher warnings. There is no updater or telemetry
+service in WebFrotz.
+
+- **Load story** uses the native Windows picker; recent stories can be reopened
+  from the **Local library** panel. Only paths are remembered, not copies of
+  story files. The last ten entries are keyed by SHA-256 of the full story,
+  so changed contents cannot accidentally reuse another story's map/save history.
+  A missing/moved/changed recent file reports an error; use Load story again.
+- **Save** uses a native Save As dialog for the actual Quetzal output. **Restore**
+  offers a native picker or **Use last local save** for this exact story.
+  The C interpreter still verifies saves. Cancelling a picker is not a successful
+  save/restore. Export transcript also uses a native Save As dialog.
+- V1-V3 map discoveries are stored locally per story in the portable map model's
+  coordinates, with identities, names and links intact. Reopening starts a
+  **fresh game with retained discoveries**, not an automatic game restore.
+  Restore a `.qzl` to resume progress. Imported maps have no stale current room
+  or pending movement, so reopening/restore cannot invent a connection.
+  **Restart clears discoveries**; restore and undo retain them. V5 still has no
+  automatic room telemetry. Maps are separate from Quetzal saves and contain
+  previously discovered room names (potential spoilers).
+- Closing confirms that unsaved game progress and transcript will be lost,
+  and waits for pending map writes. **There is no automatic game save.**
+  **Clear local history and maps** confirms, stops the current session and
+  removes remembered paths/maps, but never deletes original stories or saves.
+
+Local data lives under `%LOCALAPPDATA%\io.github.chaynes89.webfrotz`, not in the
+repository. Storage replacement retains a recovery backup. Storage, invalid-map,
+read/write and missing-file errors are surfaced; a damaged library prevents
+startup with a native error message rather than silently discarding data.
+For recovery, close the app and move its `library.json`/`library.backup` aside
+(or the affected `<story-sha256>.json`/`.backup` map files); reopen with Load story.
+Keep your `.qzl` files. Uninstalling should not be relied on to erase private
+WebView2/local data; clear it explicitly.
+
+### Build the Windows installer
+
+Use **Windows x64**, Node 24 LTS, Python 3.10+, Emscripten 4.0.18, the pinned
+Rust toolchain in `rust-toolchain.toml`, **Visual Studio 2022 Build Tools**
+with **Desktop development with C++** (MSVC and Windows SDK), and WebView2 for
+local development. See [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+Build dependencies/runtime installers need internet access on the build machine.
+`Cargo.lock` and `package-lock.json` pin dependencies; this is a reproducible
+build procedure, not a promise of byte-identical executables (the offline
+Evergreen WebView2 installer is resolved at bundle time).
+
+```powershell
+npm ci
+npm run build:wasm
+npm run desktop:dev
+```
+
+Desktop development uses **4180** with strict port selection, never 4175.
+The production hook rebuilds WASM, generates only original fixtures, checks
+TypeScript, builds into `.build\desktop-dist`, collects dependency/source notices,
+and embeds it in the native executable:
+
+```powershell
+npm run desktop:build -- --ci -- --locked
+cargo test --locked --manifest-path src-tauri\Cargo.toml
+```
+
+Installer output: `src-tauri\target\release\bundle\nsis\`.
+The original icon source is `docs\app-icon.svg`; regenerate with
+`npx tauri icon docs\app-icon.svg`.
+The frontend build never overwrites `dist`, so existing browser previews stay
+intact. Both app assets and bundled GPL/dependency notices are available offline.
+Redistribute the matching corresponding source and all notices, not just the
+installer; see [DEPENDENCIES.md](DEPENDENCIES.md).
+
+Windows CI builds the actual NSIS installer, runs Rust storage regressions and
+launches the **release Tauri executable/WebView2**, loading a generated story
+through the real native picker. It exercises WASM gameplay, map toggle, native
+save/restore/export, close/reopen persistence, restart and clearing history.
+Its isolated CDP port **4181** is enabled only by the CI process environment;
+production does not enable a debugging port. Browser adapter tests separately
+mock native IPC but run the actual WASM map-import path.
+The local implementation machine lacked MSVC/Windows SDK; local checks cover
+TypeScript, real WASM/portable regressions and browser interaction, while the
+Windows job is the authoritative installer/native integration check.
+
+No file associations, command-line story opening, drag/drop, macOS/Linux
+installers, signed binaries or automatic updates are provided in this first
+desktop integration. Interpreter/media/version limitations below still apply.
 
 ## Build and develop
 
@@ -129,8 +232,11 @@ $env:WEBFROTZ_BASE = "/WebFrotz/"
 npm run build
 ```
 
-CI produces a `webfrotz-static-site` artifact. No hosted deployment, release or
-Pages configuration is performed automatically. Passing CI also produces
+CI produces a `webfrotz-static-site` artifact. The separate GitHub Pages workflow
+validates a `/WebFrotz/` build and automatically deploys passing `main` builds to
+**https://chaynes89.github.io/WebFrotz/** using the official Pages actions.
+Desktop builds explicitly use `/`, regardless of `WEBFROTZ_BASE`.
+No release or version tag is created automatically. Passing CI also produces
 `webfrotz-release-assets` with versioned static and matching-source zip files,
 including GPL and runtime dependency notices. To package a committed version
 locally after building, run `npm run package:release`.
@@ -166,6 +272,11 @@ npm run test:browser
 ```
 
 The test server uses port 4173, separate from the optional local preview on 4175.
+
+`npm run test:pages` checks the live Pages URL using only `station.z3`, validating
+the worker/WASM paths, six-room gameplay with a vertical connection, map toggle
+and restart. `WEBFROTZ_PAGES_URL` may select an isolated loopback `/WebFrotz/`
+preview; this script refuses the protected preview ports.
 
 The README image is reproducible using only the original generated `station.z3`
 fixture. With an isolated build preview on port 4178, run `npm run screenshot`.
