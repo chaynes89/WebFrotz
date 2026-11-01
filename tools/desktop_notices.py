@@ -30,7 +30,7 @@ def main():
     metadata = json.loads(subprocess.check_output([
         "cargo", "metadata", "--locked", "--format-version", "1",
         "--manifest-path", str(ROOT / "src-tauri" / "Cargo.toml"),
-    ], cwd=ROOT, text=True))
+    ], cwd=ROOT, text=True, encoding="utf-8"))
     rows = ["# Locked Rust dependencies", "", "Exact packages and their declared licenses/source URLs.",
             "Original distributed license/notice files follow in the package directories.", ""]
     for package in metadata["packages"]:
@@ -50,11 +50,11 @@ def main():
             source = folder / package["license_file"]
             shutil.copyfile(source, target / source.name)
     (notices / "native" / "DEPENDENCIES.md").write_text("\n".join(rows), encoding="utf-8")
-    sysroot = Path(subprocess.check_output(["rustc", "--print", "sysroot"], text=True).strip())
+    sysroot = Path(subprocess.check_output(["rustc", "--print", "sysroot"], text=True, encoding="utf-8").strip())
     for source in (sysroot / "share" / "doc" / "rust").glob("*"):
         if source.is_file() and re.match(r"^(copyright|license)", source.name, re.I):
             shutil.copyfile(source, notices / f"rust-{source.name}")
-    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, encoding="utf-8").strip()
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT))
     (dist / "SOURCE.txt").write_text(
         "WebFrotz desktop - GPL-2.0-or-later, no warranty.\n"
