@@ -63,8 +63,10 @@ export function useSession() {
         case 'map': map.value = message.map; break
         case 'input': request.value = message.request; state.value = 'running'; break
         case 'state':
-          if (message.reason === 1) transcript.value += '\n[Session initialized / discoveries reset]\n'
-          else notice.value = message.reason === 2 ? 'Game restored. Discoveries retained.' : 'Turn undone. Discoveries retained.'
+          if (message.reason === 1) transcript.value += version.value === 5 ?
+            '\n[Session initialized / V5 text mode]\n' : '\n[Session initialized / discoveries reset]\n'
+          else notice.value = (message.reason === 2 ? 'Game restored.' : 'Turn undone.') +
+            (version.value === 5 ? '' : ' Discoveries retained.')
           break
         case 'save':
           download(new Uint8Array(message.data), `${storyName.value}.qzl`, 'application/octet-stream')
@@ -81,7 +83,7 @@ export function useSession() {
   async function load(file: File) {
     const activeSelection = ++selection
     try {
-      if (file.size > 128 * 1024) throw new Error('V1-V3 stories must be at most 128 KiB.')
+      if (file.size > 256 * 1024) throw new Error('Supported stories must be at most 256 KiB.')
       const data = await file.arrayBuffer()
       if (selection !== activeSelection) return false
       const v = validateStory(data)

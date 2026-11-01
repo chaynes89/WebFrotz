@@ -59,7 +59,14 @@ void os_init_screen(void)
     h_font_height = h_font_width = 1;
     h_default_foreground = WHITE_COLOUR;
     h_default_background = BLACK_COLOUR;
-    h_config |= CONFIG_SPLITSCREEN;
+    if (h_version <= V3)
+        h_config |= CONFIG_SPLITSCREEN;
+    else {
+        h_config = CONFIG_FIXED;
+        h_flags &= ~(GRAPHICS_FLAG | MOUSE_FLAG | COLOUR_FLAG | SOUND_FLAG | MENU_FLAG);
+        h_interpreter_number = INTERP_APPLE_IIC;
+        h_interpreter_version = 'W';
+    }
 }
 
 void os_fatal(const char* message)
@@ -88,7 +95,7 @@ zchar os_read_line(int max, zchar* buffer, int timeout, int width, int continued
 {
     (void)width; (void)continued;
     if (timeout)
-        os_fatal("Timed input is not supported in the V1-V3 browser host");
+        os_fatal("Timed input is not supported in the browser host");
     return (zchar)browser_input(max, buffer, 0);
 }
 
@@ -96,7 +103,7 @@ zchar os_read_key(int timeout, int cursor)
 {
     (void)cursor;
     if (timeout)
-        os_fatal("Timed input is not supported in the V1-V3 browser host");
+        os_fatal("Timed input is not supported in the browser host");
     return (zchar)browser_input(1, NULL, 1);
 }
 

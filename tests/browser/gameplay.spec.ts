@@ -81,10 +81,10 @@ test('real Quetzal save/restore, cancelled restore, undo and story replacement',
 test('unsupported stories, stop and narrow layout', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('Load story file').setInputFiles({
-    name: 'unsupported.z5', mimeType: 'application/octet-stream', buffer: Buffer.from([5, ...Array(99).fill(0)]),
+    name: 'unsupported.z4', mimeType: 'application/octet-stream', buffer: Buffer.from([4, ...Array(99).fill(0)]),
   })
 
-  await expect(page.getByRole('alert')).toContainText('V4-V8')
+  await expect(page.getByRole('alert')).toContainText('V4 and V6-V8')
   await page.setViewportSize({ width: 390, height: 844 })
   await load(page)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

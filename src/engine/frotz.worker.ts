@@ -26,6 +26,8 @@ let column = 1
 let dirtyScreen = true
 let savePending = false
 let snapshot: MapSnapshot = emptyMap()
+let statusRows = 1
+let fatalReported = false
 
 function flush() {
   if (output) { send({ type: 'output', text: output }); output = '' }
@@ -47,7 +49,10 @@ function wait(kind: InputRequest['kind'], max: number) {
 
 function fail(error: unknown) {
   flush()
-  send({ type: 'error', message: error instanceof Error ? error.message : String(error) })
+  if (fatalReported) return
+  const detail = error instanceof Error ? error.message :
+    typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error)
+  send({ type: 'error', message: detail })
 }
 
 const host = {
@@ -63,7 +68,8 @@ const host = {
     } else if (window === 1) {
       if (code === 10) { row++; column = 1 }
       else {
-        if (row >= 2 && row <= 30 && column >= 1 && column <= 80) upper[row - 2][column - 1] = character
+        const y = row - 1 - statusRows
+        if (y >= 0 && y < upper.length && column >= 1 && column <= 80) upper[y][column - 1] = character
         column += character.length
       }
       dirtyScreen = true
@@ -74,14 +80,14 @@ const host = {
   },
   cursor(y: number, x: number) { row = y; column = x },
   erase(top: number, left: number, bottom: number, right: number) {
-    for (let y = Math.max(2, top); y <= Math.min(30, bottom); y++)
+    for (let y = Math.max(1 + statusRows, top); y <= Math.min(30, bottom); y++)
       for (let x = Math.max(1, left); x <= Math.min(80, right); x++)
-        upper[y - 2][x - 1] = ' '
+        upper[y - 1 - statusRows][x - 1] = ' '
     if (top === 1) status = Array<string>(80).fill(' ')
     dirtyScreen = true
   },
   windowHeight(window: number, height: number) {
-    if (window === 1) { upperHeight = Math.max(0, Math.min(29, height)); dirtyScreen = true }
+    if (window === 1) { upperHeight = Math.max(0, Math.min(30 - statusRows, height)); dirtyScreen = true }
   },
   beginMap(current: number) { snapshot = { current, rooms: [], connections: [] } },
   room(object: number, label: string, x: number, y: number, z: number) { snapshot.rooms.push({ object, label, x, y, z }) },
@@ -97,7 +103,11 @@ const host = {
     send({ type: 'state', reason })
   },
   warning(message: string) { send({ type: 'warning', message }) },
-  fatal(message: string) { send({ type: 'error', message }) },
+  fatal(message: string) {
+    fatalReported = true
+    flush()
+    send({ type: 'error', message })
+  },
   async file(mode: number) {
     if (!engine) throw new Error('Interpreter filesystem is unavailable.')
     if (mode === 1) {
@@ -130,7 +140,7 @@ self.onmessage = async (event: MessageEvent<ToEngine>) => {
     if (message.type === 'start') {
       if (started) throw new Error('Use a new worker to replace or restart a story.')
       started = true
-      validateStory(message.story)
+      statusRows = validateStory(message.story) === 5 ? 0 : 1
       const url = `${message.wasmBase}frotz.js`
       const imported = await import(/* @vite-ignore */ url) as { default: Factory }
       engine = await imported.default({

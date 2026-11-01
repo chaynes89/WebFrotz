@@ -15,7 +15,7 @@ const restarting = ref(false)
 const restartDialog = ref<HTMLDialogElement>()
 const history: string[] = []
 let historyIndex = 0
-const room = computed(() => map.value.rooms[map.value.current]?.label || 'No position fix')
+const room = computed(() => version.value === 5 ? 'V5 / no room telemetry' : map.value.rooms[map.value.current]?.label || 'No position fix')
 const online = computed(() => state.value === 'running' || state.value === 'loading')
 const phase = computed(() => request.value?.kind === 'restore' ? 'AWAITING SAVE FILE' :
   request.value ? 'AWAITING INPUT' : state.value.toUpperCase())
@@ -104,7 +104,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
       <div class="brand"><span class="brand-mark" aria-hidden="true">W/F</span><div><h1>WEBFROTZ</h1><p>DEEP-SPACE STORY TERMINAL</p></div></div>
       <div class="serial">PERSONAL EXPLORATION SYSTEM<br /><span>MODEL II / C · REV 001</span></div>
       <button class="load-button" @click="storyPicker?.click()">Load story <span aria-hidden="true">↥</span></button>
-      <input ref="storyPicker" type="file" accept=".z1,.z2,.z3" class="file-input" aria-label="Load story file" @change="selected($event, false)" />
+      <input ref="storyPicker" type="file" accept=".z1,.z2,.z3,.z5" class="file-input" aria-label="Load story file" @change="selected($event, false)" />
     </header>
 
     <div class="console" :class="{ 'map-expanded': expanded }">
@@ -117,7 +117,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
           <div class="telemetry">
             <div><span>STORY CARTRIDGE</span><strong>{{ storyName || 'No story mounted' }}</strong></div>
             <div><span>POSITION FIX</span><strong>{{ room }}</strong></div>
-            <div><span>ENGINE</span><strong>C / WEBASSEMBLY <small>{{ version ? `Z-MACHINE V${version}` : 'V1 — V3' }}</small></strong></div>
+            <div><span>ENGINE</span><strong>C / WEBASSEMBLY <small>{{ version ? `Z-MACHINE V${version}` : 'V1 — V3 / V5' }}</small></strong></div>
           </div>
           <div class="system-actions">
             <button @click="restarting = true" :disabled="!storyName">Restart</button>
@@ -126,12 +126,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
             <button @click="session.submit('', 17)" :disabled="!canCommand">Undo</button>
             <button @click="session.stop" :disabled="!online">Stop</button>
           </div>
-          <p class="operation-note">Save / Restore send the story's own commands. Discoveries stay in this session, not in your save file. Alt+N / Alt+U: core restart / undo.</p>
+          <p class="operation-note">Save / Restore send the story's own commands. {{ version === 5 ? 'V5 text mode: automatic mapping unavailable; undo requires story checkpoints.' : 'Discoveries stay in this session, not in your save file.' }} Alt+N / Alt+U: core restart / undo.</p>
           <div class="vent" aria-hidden="true"><i v-for="n in 12" :key="n" /></div>
         </div>
       </section>
 
-      <RoomMap :map="map" :expanded="expanded" @toggle="expanded = !expanded" />
+      <RoomMap :map="map" :expanded="expanded" :supported="version !== 5" @toggle="expanded = !expanded" />
 
       <section class="transcript-panel" aria-label="Story terminal">
         <header class="panel-heading"><span><span class="led" :class="{ idle: !online }" /> STORY CHANNEL / {{ phase }}</span>
@@ -142,7 +142,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keyboard))
         <div ref="transcriptPanel" class="transcript" tabindex="0" role="log" aria-label="Story transcript" aria-live="polite" aria-relevant="additions text">
           <template v-if="!storyName">
             <p class="boot-line">FROTZ CORE ........ READY<br />PHOSPHOR DISPLAY ... ONLINE<br />NAVIGATION ........ STANDBY</p>
-            <p>Mount a raw .z1, .z2 or .z3 story to begin.<br />Your story and commands stay on this device.</p>
+            <p>Mount a raw .z1, .z2, .z3 or .z5 story to begin.<br />Your story and commands stay on this device.</p>
             <p class="dim">No commercial stories are bundled. Use a story you are entitled to play.</p>
           </template>
           <pre v-else>{{ transcript }}</pre>

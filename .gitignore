@@ -10,3 +10,7 @@ public/COPYING.txt
 *.sav
 *.aux
 *.rec
+*.z[1-8]
+*.zblorb
+*.blorb
+*.ulx
