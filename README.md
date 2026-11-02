@@ -1,4 +1,4 @@
-# WebFrotz 1.0
+# WebFrotz 1.1
 
 A deep-space story terminal: ivory hardware, phosphor-green text, dark CRT
 surfaces and an instrument-panel map. Built with **Vue 3, TypeScript, Vite and
@@ -14,20 +14,21 @@ and portable map model, not a mockup. No commercial story text is shown.*
 load a story you are entitled to play. Game data stays in your browser;
 GitHub Pages serves only the static app, WASM and original generated fixtures.
 
-## Download 1.0
+## Download 1.1
 
-Get **[WebFrotz 1.0](https://github.com/chaynes89/WebFrotz/releases/tag/v1.0.0)**.
-The release includes `webfrotz-1.0.0-static.zip`, a ready-to-serve site with the
-real WASM interpreter, plus `webfrotz-1.0.0-source.zip` from the same passing
-commit. Extract the static archive and serve its root over HTTP(S), for example:
+Get **[WebFrotz 1.1](https://github.com/chaynes89/WebFrotz/releases/tag/v1.1.0)**.
+The release includes an x64 Windows installer, `webfrotz-1.1.0-static.zip` (a
+ready-to-serve site with the real WASM interpreter), and the corresponding
+`webfrotz-1.1.0-source.zip`. Extract the static archive and serve its root over
+HTTP(S), for example:
 
 ```powershell
 python -m http.server 4179 --bind 127.0.0.1
 ```
 
 Open `http://127.0.0.1:4179/`; opening `index.html` directly will not work.
-No commercial games are bundled. The supported versions and browser limitations
-below also apply to 1.0; a stable release does not imply complete desktop parity.
+No commercial games are bundled. See the supported versions and limitations
+below; a stable release does not imply complete desktop-interpreter parity.
 Retain `COPYING.txt`, `SOURCE.txt` and the notices in `licenses/` when
 redistributing. Provide the matching corresponding source under the GPL;
 see [DEPENDENCIES.md](DEPENDENCIES.md) and [PROVENANCE.md](PROVENANCE.md).
@@ -140,12 +141,12 @@ The optional **Tauri 2** app embeds the same Vue/Three.js frontend, Web Worker
 and real C/WASM interpreter. It is not a separate interpreter port. The browser
 build and its browser-local library/autosave remain unchanged.
 
-Each passing `main` CI run produces a **webfrotz-windows-installer** artifact
-containing an x64 per-user NSIS installer and the matching source zip. This is
-a development artifact, not a new tagged release. Download it from
-[Actions](https://github.com/chaynes89/WebFrotz/actions), extract it and run the
-setup executable. **No Node, Python, Rust, Emscripten or local HTTP server is
-needed on the player's machine.** The installer includes Microsoft's signed
+Download the x64 per-user NSIS installer from the
+[1.1 release](https://github.com/chaynes89/WebFrotz/releases/tag/v1.1.0).
+Each passing `main` CI run also produces a **webfrotz-windows-installer**
+development artifact containing the installer and matching source zip.
+**No Node, Python, Rust, Emscripten or local HTTP server is needed on the
+player's machine.** The installer includes Microsoft's signed
 WebView2 offline installer for machines without the runtime; installation and
 gameplay do not require downloading app assets. WebView2 may separately update
 itself when online. The WebFrotz installer is currently unsigned: Windows may
