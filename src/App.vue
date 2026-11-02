@@ -47,7 +47,7 @@ const restarting = ref(false)
 const restartDialog = ref<HTMLDialogElement>()
 const history: string[] = []
 let historyIndex = 0
-const room = computed(() => version.value === 5 ? 'V5 / no room telemetry' : map.value.rooms[map.value.current]?.label || 'No position fix')
+const room = computed(() => version.value >= 4 ? `V${version.value} / no room telemetry` : map.value.rooms[map.value.current]?.label || 'No position fix')
 const online = computed(() => state.value === 'running' || state.value === 'loading')
 const phase = computed(() => request.value?.kind === 'restore' ? 'AWAITING SAVE FILE' :
   request.value ? 'AWAITING INPUT' : state.value.toUpperCase())
@@ -258,7 +258,7 @@ onBeforeUnmount(() => {
       <div class="serial">PERSONAL EXPLORATION SYSTEM<br /><span>MODEL II / C · V{{ appVersion }}</span></div>
       <button class="help-button" @click="helpOpen = true">Help</button>
       <button class="load-button" :disabled="choosing || nativeBusy" @click="desktop ? loadNative() : storyPicker?.click()">Load story <span aria-hidden="true">↥</span></button>
-      <input ref="storyPicker" type="file" accept=".z1,.z2,.z3,.z5" class="file-input" aria-label="Load story file" @change="selected($event, false)" />
+      <input ref="storyPicker" type="file" accept=".z1,.z2,.z3,.z4,.z5" class="file-input" aria-label="Load story file" @change="selected($event, false)" />
     </header>
 
     <div class="console" :class="{ 'map-expanded': expanded }">
@@ -267,11 +267,11 @@ onBeforeUnmount(() => {
         <div class="briefing-body">
           <p class="eyebrow">LONG-RANGE FICTION / LOCAL EXECUTION</p>
           <h2>Your next world.<br /><em>Waiting in the dark.</em></h2>
-          <p class="intro">One story. An open channel. A map of everywhere you have been.</p>
+          <p class="intro">One story. An open channel. A map when the story provides room telemetry.</p>
           <div class="telemetry">
             <div><span>STORY CARTRIDGE</span><strong>{{ storyName || 'No story mounted' }}</strong></div>
             <div><span>POSITION FIX</span><strong>{{ room }}</strong></div>
-            <div><span>ENGINE</span><strong>C / WEBASSEMBLY <small>{{ version ? `Z-MACHINE V${version}` : 'V1 — V3 / V5' }}</small></strong></div>
+            <div><span>ENGINE</span><strong>C / WEBASSEMBLY <small>{{ version ? `Z-MACHINE V${version}` : 'V1 — V5' }}</small></strong></div>
             <div v-if="!desktop" :class="{ alerting: autosave.state === 'failed' || autosave.state === 'paused' }" data-testid="autosave-status">
               <span>AUTOSAVE</span><strong :title="autosave.detail">{{ autosaveText }}</strong></div>
           </div>
@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
             <button @click="session.submit('', 17)" :disabled="!canCommand || nativeBusy || choosing">Undo</button>
             <button @click="session.stop" :disabled="!online || nativeBusy || choosing">Stop</button>
           </div>
-          <p class="operation-note">Save / Restore send the story's own commands. {{ version === 5 ? 'V5 text mode: automatic mapping unavailable; undo requires story checkpoints.' : desktop ? 'Discoveries are stored locally per story, separately from game saves. Restart clears them.' : 'Progress and discoveries autosave in this browser at each prompt; Save exports a portable file.' }} Alt+N / Alt+U: core restart / undo.</p>
+          <p class="operation-note">Save / Restore send the story's own commands. {{ version === 5 ? 'V5 text mode: automatic mapping unavailable; undo requires story checkpoints.' : version === 4 ? 'V4 text mode: automatic mapping unavailable; undo uses interpreter checkpoints.' : desktop ? 'Discoveries are stored locally per story, separately from game saves. Restart clears them.' : 'Progress and discoveries autosave in this browser at each prompt; Save exports a portable file.' }} Alt+N / Alt+U: core restart / undo.</p>
           <details v-if="!desktop" class="local-library browser-library">
             <summary>Browser library / {{ library.length }} {{ library.length === 1 ? 'story' : 'stories' }}</summary>
             <p class="operation-note">Imported stories, autosaves and maps stay in this browser on this device only. Clearing site data removes them.</p>
@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <RoomMap :map="map" :expanded="expanded" :supported="version !== 5" @toggle="expanded = !expanded" />
+      <RoomMap :map="map" :expanded="expanded" :supported="version <= 3" @toggle="expanded = !expanded" />
 
       <section class="transcript-panel" aria-label="Story terminal">
         <header class="panel-heading"><span><span class="led" :class="{ idle: !online }" /> STORY CHANNEL / {{ phase }}</span>

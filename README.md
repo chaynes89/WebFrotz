@@ -35,7 +35,7 @@ see [DEPENDENCIES.md](DEPENDENCIES.md) and [PROVENANCE.md](PROVENANCE.md).
 
 ## Play
 
-Load a raw Z-machine **V1, V2, V3 or V5** story (`.z1`, `.z2`, `.z3`, `.z5`) you are
+Load a raw Z-machine **V1, V2, V3, V4 or V5** story (`.z1`, `.z2`, `.z3`, `.z4`, `.z5`) you are
 entitled to play. No commercial games are bundled. Stories and commands are
 processed locally; there is no backend, analytics or story upload.
 
@@ -49,8 +49,8 @@ processed locally; there is no backend, analytics or story upload.
   the game. Story vocabulary stays hidden until you select **Reveal story
   vocabulary (spoilers)**. Opening Help again hides it by default. The spoiler
   warning explains that dictionary keys can expose unseen objects or puzzle clues.
-  Keys come from the loaded file's actual standard header dictionary for V1-V3/V5,
-  not a fabricated vocabulary or a list of guaranteed valid phrases. V1-V3 keys
+  Keys come from the loaded file's actual standard header dictionary for V1-V5,
+  not a fabricated vocabulary or a list of guaranteed valid phrases. V1-V4 keys
   have at most 6 encoded Z-characters; V5 has 9, so displayed keys can be truncated.
   V5 custom alphabets and standard/custom ZSCII Unicode tables are supported.
   Alternate dictionaries, custom parser vocabulary and runtime dictionary changes
@@ -109,7 +109,7 @@ uploaded; there is still no backend.
   the snapshot at the prompt, then waits for your next command. The transcript
   and map are restored from the same stored record. Undo history starts from the resumed
   turn. As with Restore, a V3 split upper window is cleared on resume until the
-  game redraws it. V5 restores its saved upper-window text.
+  game redraws it. V4/V5 restore their saved upper-window text.
 - **Two slots are kept per story:** the latest checkpoint of the current run and
   the latest checkpoint of one earlier run. **Restart**, the in-game restart or
   Start new game moves the existing autosave to the earlier slot at the new
@@ -305,12 +305,12 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Browser tests run against the production build, load generated original V1-V3/V5
+Browser tests run against the production build, load generated original V1-V5
 stories, and execute real Z-machine instructions through WASM. They cover text,
 status score/moves, movement/map links, toggle, restart, save/restore/cancel,
 undo, replacement, stop, browser-library reopening, autosave resume, earlier-run
 recovery, second-tab pause and visible storage failures, viewport-height desktop and narrow layouts, Help and
-spoiler-gated vocabulary, WebGL fallback, V5 length scaling,
+spoiler-gated vocabulary, WebGL fallback, V4/V5 length scaling,
 V5 upper-window coordinates and explicit timed-input rejection. The fixture generator
 is a tiny bytecode assembler, not the application's interpreter.
 Screenshots are written to `test-results`.
@@ -349,7 +349,7 @@ ctest --test-dir .build\portable -C Debug --output-on-failure
 
 CI runs native core/model regressions on Linux plus Emscripten/Node regressions
 and Chromium gameplay tests. The retained core suite covers V1/V2/V3/**V5**,
-including host events, saves/restores, undo and playback. Browser V5 support is
+including host events, saves/restores, undo and playback. Browser V4/V5 support is
 text-oriented and narrower than the core's full capabilities.
 
 ### Optional private story smoke tests
@@ -397,8 +397,9 @@ resume execution. Periodic worker yields allow responsiveness; stopping/replacin
 uses worker termination instead of trying to interrupt/re-enter the C core.
 
 The browser supports **raw, text-oriented V1-V3 adventures** (maximum
-128 KiB) and **V5** (maximum 256 KiB, four-byte header length units).
-V4, V6-V8, Blorb, Glulx, pictures, sampled sound/music, timed input,
+128 KiB) and **V4/V5** (maximum 256 KiB, four-byte header length units).
+V4/V5 do not provide the V1-V3 status-room events used for automatic mapping.
+V6-V8, Blorb, Glulx, pictures, sampled sound/music, timed input,
 mouse opcodes, story menus, auxiliary files, command recording/playback and
 interpreter-managed script files are not supported. Relevant unavailable
 operations report an error or notice rather than pretending to work.

@@ -2,11 +2,11 @@ export function validateStory(data: ArrayBuffer): number {
   if (data.byteLength < 64) throw new Error('Story is shorter than a Z-machine header.')
   const header = new DataView(data)
   const version = header.getUint8(0)
-  if (![1, 2, 3, 5].includes(version))
-    throw new Error('Load a raw Z-machine V1-V3 or V5 story (.z1, .z2, .z3, .z5). Blorb, Glulx, V4 and V6-V8 are not supported.')
-  const maximum = version === 5 ? 256 : 128
+  if (![1, 2, 3, 4, 5].includes(version))
+    throw new Error('Load a raw Z-machine V1-V5 story (.z1, .z2, .z3, .z4, .z5). Blorb, Glulx and V6-V8 are not supported.')
+  const maximum = version >= 4 ? 256 : 128
   if (data.byteLength > maximum * 1024) throw new Error(`V${version} stories must be at most ${maximum} KiB.`)
-  const declaredSize = header.getUint16(26) * (version === 5 ? 4 : 2)
+  const declaredSize = header.getUint16(26) * (version >= 4 ? 4 : 2)
   if (declaredSize && (declaredSize > data.byteLength || declaredSize < 64))
     throw new Error('Story is truncated or its declared length is invalid.')
   const size = declaredSize || data.byteLength

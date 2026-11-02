@@ -150,13 +150,13 @@ export function useSession() {
           if (message.reason === 1) {
             if (initialized) { runId = newRun(); firstOfRun = true }
             initialized = true
-            transcript.value += version.value === 5 ?
-              '\n[Session initialized / V5 text mode]\n' : savedMap?.rooms.length ?
+            transcript.value += version.value >= 4 ?
+              `\n[Session initialized / V${version.value} text mode]\n` : savedMap?.rooms.length ?
                 '\n[Session initialized / local discoveries loaded]\n' : '\n[Session initialized / discoveries reset]\n'
             savedMap = undefined
           }
           else notice.value = (message.reason === 2 ? 'Game restored.' : 'Turn undone.') +
-            (version.value === 5 ? '' : ' Discoveries retained.')
+            (version.value <= 3 ? ' Discoveries retained.' : '')
           break
         case 'save':
           if (desktop) {
@@ -178,7 +178,7 @@ export function useSession() {
             format: 1, runId, savedAt: Date.now(), data: message.data,
             textBuffer: message.textBuffer, tokenBuffer: message.tokenBuffer,
             transcript: trimTranscript(transcript.value), status: status.value, upper: upper.value,
-            map: version.value === 5 ? null : map.value,
+            map: version.value >= 4 ? null : map.value,
           }, activeGeneration, firstOfRun, firstOfRun && resume?.runId === runId ? resume.savedAt : undefined)
           firstOfRun = false
           break
@@ -190,7 +190,7 @@ export function useSession() {
         case 'resumed':
           initialized = true
           transcript.value = `${resume?.transcript ?? ''}\n[Autosave resumed / stored ${new Date(resume?.savedAt ?? 0).toLocaleString()}]\n`
-          if (version.value === 5) upper.value = resume?.upper ?? ''
+          if (version.value >= 4) upper.value = resume?.upper ?? ''
           notice.value = 'Autosave resumed. Undo history starts from this turn.'
           break
         case 'warning': notice.value = message.message; break

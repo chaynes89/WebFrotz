@@ -8,7 +8,7 @@ const props = defineProps<{ map: MapSnapshot; expanded: boolean; supported: bool
 const emit = defineEmits<{ toggle: [] }>()
 const surface = ref<HTMLDivElement>()
 const failure = ref('')
-const current = computed(() => props.supported ? props.map.rooms[props.map.current]?.label || 'Awaiting location' : 'V5 / mapping unavailable')
+const current = computed(() => props.supported ? props.map.rooms[props.map.current]?.label || 'Awaiting location' : 'Mapping unavailable')
 let renderer: THREE.WebGLRenderer | undefined
 let controls: OrbitControls | undefined
 let observer: ResizeObserver | undefined

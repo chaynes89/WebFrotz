@@ -5,7 +5,7 @@ const defaultUnicode = 'äöüÄÖÜß»«ëïÿËÏáéíóúýÁÉÍÓÚÝàè
 export function readVocabulary(data: ArrayBuffer): string[] {
   const version = validateStory(data)
   const view = new DataView(data)
-  const size = view.getUint16(26) * (version === 5 ? 4 : 2) || data.byteLength
+  const size = view.getUint16(26) * (version >= 4 ? 4 : 2) || data.byteLength
   function range(address: number, length: number) {
     if (!Number.isInteger(address) || address < 64 || address + length > size)
       throw new Error('Story vocabulary contains an out-of-range table.')
