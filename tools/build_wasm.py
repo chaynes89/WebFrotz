@@ -48,7 +48,7 @@ def main():
          "-sASYNCIFY=1", "-sASYNCIFY_STACK_SIZE=131072",
          "-sALLOW_MEMORY_GROWTH=1", "-sMAXIMUM_MEMORY=268435456",
          "-sSTACK_SIZE=1048576", "-sFORCE_FILESYSTEM=1",
-         "-sEXPORTED_FUNCTIONS=['_web_run','_web_map_import_room','_web_map_import_connection','_malloc','_free']",
+         "-sEXPORTED_FUNCTIONS=['_web_run','_web_set_resume','_web_set_checkpoints','_web_map_import_room','_web_map_import_connection','_malloc','_free']",
          "-sEXPORTED_RUNTIME_METHODS=['FS','ccall','UTF8ToString']",
          "-sASSERTIONS=1", "-sEXIT_RUNTIME=0"])
     print("Built public/wasm/frotz.js and frotz.wasm")

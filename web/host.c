@@ -7,6 +7,24 @@
 
 extern int frotz_main(int argc, char** argv);
 extern void web_map_char(uint16_t character);
+extern zword save_quetzal(FILE* svf, FILE* stf, long stf_start_pos);
+extern zword restore_quetzal(FILE* svf, FILE* stf, long stf_start_pos);
+extern void restart_header(void);
+extern void split_window(zword height);
+
+/* Browser autosave checkpoints are taken while z_read waits for a line.
+ * They are not interchangeable with SAVE files: the PC is inside z_read,
+ * so resuming must restore the read's buffers and let that z_read finish. */
+static int resume_pending;
+static zword resume_text;
+static zword resume_token;
+static int resume_keys;
+static int checkpoints_enabled;
+
+EMSCRIPTEN_KEEPALIVE void web_set_checkpoints(int enabled)
+{
+    checkpoints_enabled = enabled != 0;
+}
 
 EM_ASYNC_JS(int, browser_input, (int maximum, zchar* buffer, int key_only), {
     const result = await Module.host.input(key_only ? "key" : "line", maximum);
@@ -27,6 +45,61 @@ EM_ASYNC_JS(void, browser_yield, (), {
     Module.host.flush();
     await new Promise(resolve => setTimeout(resolve, 0));
 });
+
+EMSCRIPTEN_KEEPALIVE void web_set_resume(int text, int token)
+{
+    resume_pending = 1;
+    resume_text = (zword)text;
+    resume_token = (zword)token;
+}
+
+static void checkpoint(void)
+{
+    FILE* save = fopen("/autosave.qzl", "wb");
+    FILE* story = fopen("/story.z", "rb");
+    zword success = save && story ? save_quetzal(save, story, 0) : 0;
+    if (story) fclose(story);
+    if (save && fclose(save) == EOF) success = 0;
+    if (success)
+        EM_ASM({ Module.host.checkpoint($0, $1); }, zargs[0], zargs[1]);
+    else
+        EM_ASM({ Module.host.checkpointFailed(); });
+}
+
+static int resume(void)
+{
+    FILE* save = fopen("/resume.qzl", "rb");
+    FILE* story = fopen("/story.z", "rb");
+    zword success;
+    zbyte max;
+    if (!save || !story)
+        os_fatal("Autosave checkpoint is unavailable; it was left unchanged.");
+    success = restore_quetzal(save, story, 0);
+    fclose(save);
+    fclose(story);
+    remove("/resume.qzl");
+    if ((short)success <= 0)
+        os_fatal("Autosave does not match this story or is damaged; it was left unchanged.");
+    if (resume_text >= h_dynamic_size || (resume_token && resume_token >= h_dynamic_size))
+        os_fatal("Autosave input buffers are invalid; it was left unchanged.");
+    resume_pending = 0;
+    zargs[0] = resume_text;
+    zargs[1] = resume_token;
+    zargs[2] = zargs[3] = 0;
+    if (h_version == V3)
+        split_window(0);
+    restart_header();
+    os_game_state_changed(FROTZ_STATE_RESTORED);
+    EM_ASM({ Module.host.resumed(); });
+    if (h_version <= V3)
+        z_show_status();
+    LOW_BYTE(resume_text, max)
+    if (h_version <= V4)
+        max--;
+    if (max >= INPUT_BUFFER_SIZE)
+        max = INPUT_BUFFER_SIZE - 1;
+    return max;
+}
 
 EMSCRIPTEN_KEEPALIVE int web_run(void)
 {
@@ -96,6 +169,11 @@ zchar os_read_line(int max, zchar* buffer, int timeout, int width, int continued
     (void)width; (void)continued;
     if (timeout)
         os_fatal("Timed input is not supported in the browser host");
+    if (resume_pending) {
+        max = resume();
+        buffer[0] = 0;
+    } else if (checkpoints_enabled)
+        checkpoint();
     return (zchar)browser_input(max, buffer, 0);
 }
 
@@ -104,6 +182,12 @@ zchar os_read_key(int timeout, int cursor)
     (void)cursor;
     if (timeout)
         os_fatal("Timed input is not supported in the browser host");
+    if (resume_pending) {
+        /* Skip key prompts in the discarded fresh run before its first line read. */
+        if (++resume_keys > 64)
+            os_fatal("Autosave could not reach a line prompt; it was left unchanged.");
+        return ZC_RETURN;
+    }
     return (zchar)browser_input(1, NULL, 1);
 }
 
@@ -114,6 +198,8 @@ int os_read_file_name(char* name, const char* default_name, int mode)
         EM_ASM({ Module.host.warning("Command recording, script files and auxiliary files are not supported. Use Export transcript for text history."); });
         return 0;
     }
+    if (resume_pending)
+        os_fatal("Story requested a file before autosave could resume; it was left unchanged.");
     if (!browser_file(mode))
         return 0;
     strcpy(name, mode == FILE_SAVE ? "/save.qzl" : "/restore.qzl");

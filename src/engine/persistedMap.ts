@@ -1,7 +1,7 @@
 import type { MapSnapshot } from './protocol'
 
 export function validatePersistedMap(value: unknown): MapSnapshot {
-  const invalid = () => { throw new Error('Stored map is invalid. Clear desktop history to discard it.') }
+  const invalid = () => { throw new Error('Stored map is invalid. Forget this story’s local data to discard it.') }
   if (typeof value !== 'object' || value === null) return invalid()
   const map = value as Record<string, unknown>
   if (!Array.isArray(map.rooms) || !Array.isArray(map.connections) ||

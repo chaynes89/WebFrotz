@@ -8,7 +8,23 @@ import { version as appVersion } from '../package.json'
 
 const session = useSession()
 const { map, transcript, status, upper, request, state, error, notice, storyName, version, storyData, canCommand } = session
-const { hasLocalSave, nativeBusy } = session
+const { hasLocalSave, nativeBusy, library, libraryError, recovery, autosave } = session
+const forgetting = ref<{ id: string; name: string }>()
+const forgetDialog = ref<HTMLDialogElement>()
+const recoveryDialog = ref<HTMLDialogElement>()
+const persistence = ref('')
+const autosaveText = computed(() => {
+  const value = autosave.value
+  switch (value.state) {
+    case 'stored': return `Stored ${new Date(value.at!).toLocaleTimeString()}`
+    case 'waiting': return 'Armed / next prompt'
+    case 'paused': return 'Paused / other tab'
+    case 'failed': return 'FAILED / use Save'
+    case 'unavailable': return 'Unavailable'
+    default: return 'Standby'
+  }
+})
+const when = (time?: number) => time ? new Date(time).toLocaleString() : ''
 const recents = ref<RecentStory[]>([])
 const choosing = ref(false)
 const clearing = ref(false)
@@ -37,7 +53,8 @@ const phase = computed(() => request.value?.kind === 'restore' ? 'AWAITING SAVE 
   request.value ? 'AWAITING INPUT' : state.value.toUpperCase())
 
 function keyboard(event: KeyboardEvent) {
-  if (helpOpen.value || restarting.value || clearing.value || closing.value || licenseOpen.value || nativeBusy.value || choosing.value) return
+  if (helpOpen.value || restarting.value || clearing.value || closing.value || licenseOpen.value || nativeBusy.value || choosing.value ||
+    recovery.value || forgetting.value) return
   if (event.ctrlKey && event.key.toLowerCase() === 'm') {
     event.preventDefault()
     expanded.value = !expanded.value
@@ -137,6 +154,30 @@ async function showLicense() {
     licenseDialog.value?.showModal()
   } catch (cause) { error.value = `Cannot open license notices: ${String(cause)}` }
 }
+function resetHistory() {
+  history.length = 0
+  historyIndex = 0
+  command.value = ''
+}
+async function openStored(id: string) {
+  if (await session.openStored(id)) resetHistory()
+}
+async function forgetStory() {
+  const target = forgetting.value
+  if (!target) return
+  try {
+    await session.forget(target.id)
+    notice.value = `${target.name}, its autosaves and map were removed from this browser. Exported save files are untouched.`
+  } catch (cause) { error.value = `Cannot forget stored story: ${String(cause)}` }
+  forgetting.value = undefined
+}
+async function requestPersistence() {
+  try {
+    const granted = await navigator.storage?.persist?.()
+    persistence.value = granted ? 'Persistent storage granted for this site.' :
+      'The browser kept storage best-effort; it may still evict data under storage pressure.'
+  } catch (cause) { persistence.value = `Persistent storage request failed: ${String(cause)}` }
+}
 function restart() {
   session.restart()
   restarting.value = false
@@ -161,6 +202,16 @@ watch(restarting, async active => {
   if (active) restartDialog.value?.showModal()
   else restartDialog.value?.close()
 })
+watch(recovery, async active => {
+  await nextTick()
+  if (active) recoveryDialog.value?.showModal()
+  else recoveryDialog.value?.close()
+})
+watch(forgetting, async active => {
+  await nextTick()
+  if (active) forgetDialog.value?.showModal()
+  else forgetDialog.value?.close()
+})
 watch(clearing, async active => {
   await nextTick()
   if (active) clearDialog.value?.showModal()
@@ -180,6 +231,7 @@ watch(transcript, async (_, old) => {
 })
 onMounted(async () => {
   window.addEventListener('keydown', keyboard)
+  if (!desktop) void session.refreshLibrary()
   if (desktop) {
     try {
       recents.value = await recentStories()
@@ -220,6 +272,8 @@ onBeforeUnmount(() => {
             <div><span>STORY CARTRIDGE</span><strong>{{ storyName || 'No story mounted' }}</strong></div>
             <div><span>POSITION FIX</span><strong>{{ room }}</strong></div>
             <div><span>ENGINE</span><strong>C / WEBASSEMBLY <small>{{ version ? `Z-MACHINE V${version}` : 'V1 — V3 / V5' }}</small></strong></div>
+            <div v-if="!desktop" :class="{ alerting: autosave.state === 'failed' || autosave.state === 'paused' }" data-testid="autosave-status">
+              <span>AUTOSAVE</span><strong :title="autosave.detail">{{ autosaveText }}</strong></div>
           </div>
           <div class="system-actions">
             <button @click="restarting = true" :disabled="!storyName || nativeBusy || choosing">Restart</button>
@@ -228,7 +282,21 @@ onBeforeUnmount(() => {
             <button @click="session.submit('', 17)" :disabled="!canCommand || nativeBusy || choosing">Undo</button>
             <button @click="session.stop" :disabled="!online || nativeBusy || choosing">Stop</button>
           </div>
-          <p class="operation-note">Save / Restore send the story's own commands. {{ version === 5 ? 'V5 text mode: automatic mapping unavailable; undo requires story checkpoints.' : desktop ? 'Discoveries are stored locally per story, separately from game saves. Restart clears them.' : 'Discoveries stay in this session, not in your save file.' }} Alt+N / Alt+U: core restart / undo.</p>
+          <p class="operation-note">Save / Restore send the story's own commands. {{ version === 5 ? 'V5 text mode: automatic mapping unavailable; undo requires story checkpoints.' : desktop ? 'Discoveries are stored locally per story, separately from game saves. Restart clears them.' : 'Progress and discoveries autosave in this browser at each prompt; Save exports a portable file.' }} Alt+N / Alt+U: core restart / undo.</p>
+          <details v-if="!desktop" class="local-library browser-library">
+            <summary>Browser library / {{ library.length }} {{ library.length === 1 ? 'story' : 'stories' }}</summary>
+            <p class="operation-note">Imported stories, autosaves and maps stay in this browser on this device only. Clearing site data removes them.</p>
+            <p v-if="libraryError" class="library-error" role="alert">{{ libraryError }}</p>
+            <ul aria-label="Stored stories">
+              <li v-for="item in library" :key="item.id">
+                <button :disabled="choosing || nativeBusy" @click="openStored(item.id)"
+                  :aria-label="`Open ${item.name}`">{{ item.name }} <small>V{{ item.version }} · {{ item.progressAt ? `autosave ${when(item.progressAt)}` : 'no autosave' }}</small></button>
+                <button class="forget" :disabled="choosing || nativeBusy" :aria-label="`Forget ${item.name}`" @click="forgetting = { id: item.id, name: item.name }">Forget</button>
+              </li>
+            </ul>
+            <button @click="requestPersistence">Request persistent storage</button>
+            <p v-if="persistence" class="operation-note" role="status">{{ persistence }}</p>
+          </details>
           <details v-if="desktop" class="local-library">
             <summary>Local library / {{ recents.length }} recent stories</summary>
             <p class="operation-note">Opening starts a new game with retained discoveries. Restore a save to resume. No story copies or automatic game saves.</p>
@@ -286,9 +354,27 @@ onBeforeUnmount(() => {
     <div class="screw bottom-left" aria-hidden="true" /><div class="screw bottom-right" aria-hidden="true" />
     <dialog ref="restartDialog" class="confirm-panel" aria-labelledby="restart-title" @cancel.prevent="restarting = false">
         <p class="eyebrow">SESSION RESET</p><h2 id="restart-title">Restart this story?</h2>
-        <p>Unsaved progress, transcript and all map discoveries will be cleared.</p>
+        <p v-if="desktop">Unsaved progress, transcript and all map discoveries will be cleared.</p>
+        <p v-else>The transcript and map will be cleared. At the new game's first prompt, the current autosave becomes the earlier run, replacing any older one.</p>
         <button @click="restarting = false" autofocus>Keep exploring</button>
         <button @click="restart">Restart story</button>
+    </dialog>
+    <dialog v-if="!desktop" ref="recoveryDialog" class="confirm-panel" aria-labelledby="recovery-title" @cancel.prevent="session.resolveRecovery('cancel')">
+      <template v-if="recovery">
+        <p class="eyebrow">AUTOSAVE FOUND</p><h2 id="recovery-title">Resume {{ recovery.name }}?</h2>
+        <p>Latest autosave: {{ when(recovery.current.savedAt) }}<span v-if="recovery.current.status"> — {{ recovery.current.status.trim() }}</span>.
+          Undo history is not kept across sessions. Starting a new game moves this autosave to the earlier-run slot<span v-if="recovery.previous">, replacing the older earlier run</span>.</p>
+        <button @click="session.resolveRecovery('current')" autofocus>Resume autosave</button>
+        <button v-if="recovery.previous" @click="session.resolveRecovery('previous')">Resume earlier run ({{ when(recovery.previous.savedAt) }})</button>
+        <button @click="session.resolveRecovery('new')">Start new game</button>
+        <button @click="session.resolveRecovery('cancel')">Cancel</button>
+      </template>
+    </dialog>
+    <dialog v-if="!desktop" ref="forgetDialog" class="confirm-panel" aria-labelledby="forget-title" @cancel.prevent="forgetting = undefined">
+      <h2 id="forget-title">Forget {{ forgetting?.name }}?</h2>
+      <p>The stored story, its autosaves and its map will be deleted from this browser. Exported save files are untouched.</p>
+      <button @click="forgetting = undefined" autofocus>Keep it</button>
+      <button @click="forgetStory">Forget story</button>
     </dialog>
     <CommandHelp :open="helpOpen" :story="storyData" :story-name="storyName" :version="version" @close="helpOpen = false" />
     <dialog v-if="desktop" ref="clearDialog" class="confirm-panel" aria-labelledby="clear-title" @cancel.prevent="clearing = false">

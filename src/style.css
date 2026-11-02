@@ -50,6 +50,13 @@ h2 em { color: #aec49a; font-style: normal; }
 .operation-note { font-size: 10px; color: #9aaa90; line-height: 1.6; }
 .local-library { margin-top: 12px; font-size: 11px; line-height: 1.6; }
 .local-library button { display: block; max-width: 100%; margin-top: 6px; overflow-wrap: anywhere; text-align: left; }
+.telemetry > .alerting strong { color: var(--amber); }
+.browser-library ul { list-style: none; margin: 6px 0; padding: 0; }
+.browser-library li { display: flex; gap: 6px; align-items: stretch; }
+.browser-library li button:first-child { flex: 1; min-width: 0; }
+.browser-library li small { display: block; font-size: 9px; color: #8fa782; letter-spacing: .5px; }
+.browser-library .forget { flex: none; }
+.library-error { color: var(--amber); margin: 6px 0; }
 .vent { display: flex; gap: 6px; margin-top: 15px; }
 .vent i { width: 17px; height: 3px; background: #0c160f; box-shadow: 0 1px 0 #3b4a37; }
 .map-panel { display: flex; flex-direction: column; min-width: 0; border: 1px solid #496144; background: #0c1610; overflow: hidden; }
@@ -142,7 +149,7 @@ summary { cursor: pointer; }
   .briefing h2, .briefing .intro, .briefing .eyebrow, .vent { display: none; }
   .telemetry { display: grid; grid-template-columns: 1fr 1fr; border: 0; gap: 10px; }
   .telemetry > div { padding: 0; border: 0; min-width: 0; }
-  .telemetry > div:last-child { display: none; }
+  .telemetry > div:nth-child(3) { display: none; }
   .system-actions { margin-top: 12px; }
   .operation-note { margin-bottom: 0; }
   .map-expanded { grid-template-rows: minmax(400px, 65vh) auto; }

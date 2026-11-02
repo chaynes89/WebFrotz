@@ -1,4 +1,4 @@
-import { emptyMap, type FromEngine, type InputRequest, type MapSnapshot, type ToEngine } from './protocol'
+import { emptyMap, type FromEngine, type InputRequest, type MapSnapshot, type ResumeCheckpoint, type ToEngine } from './protocol'
 import { validateStory } from './story'
 import { validatePersistedMap } from './persistedMap'
 
@@ -29,8 +29,10 @@ let savePending = false
 let snapshot: MapSnapshot = emptyMap()
 let statusRows = 1
 let fatalReported = false
+let resuming: ResumeCheckpoint | undefined
 
 function flush() {
+  if (resuming) { output = ''; return }
   if (output) { send({ type: 'output', text: output }); output = '' }
   if (dirtyScreen) {
     send({ type: 'screen', status: status.join('').trim(), upper: upper.slice(0, upperHeight).map(line => line.join('').trimEnd()).join('\n') })
@@ -101,8 +103,26 @@ const host = {
       upperHeight = 0
       dirtyScreen = true
     }
-    send({ type: 'state', reason })
+    if (!resuming) send({ type: 'state', reason })
   },
+  resumed() {
+    const saved = resuming!
+    resuming = undefined
+    output = ''
+    if (statusRows === 0) {
+      const lines = saved.upper ? saved.upper.split('\n').slice(0, 30) : []
+      upper = Array.from({ length: 30 }, (_, y) => Array.from({ length: 80 }, (_, x) => lines[y]?.[x] ?? ' '))
+      upperHeight = lines.length
+    }
+    dirtyScreen = true
+    send({ type: 'resumed' })
+  },
+  checkpoint(textBuffer: number, tokenBuffer: number) {
+    if (!engine) return
+    flush()
+    send({ type: 'checkpoint', data: engine.FS.readFile('/autosave.qzl'), textBuffer, tokenBuffer })
+  },
+  checkpointFailed() { send({ type: 'checkpoint-failed' }) },
   warning(message: string) { send({ type: 'warning', message }) },
   fatal(message: string) {
     fatalReported = true
@@ -152,6 +172,16 @@ self.onmessage = async (event: MessageEvent<ToEngine>) => {
         onAbort: (message: unknown) => fail(message),
       })
       engine.FS.writeFile('/story.z', new Uint8Array(message.story))
+      if (message.autosave) engine.ccall('web_set_checkpoints', null, ['number'], [1])
+      if (message.resume) {
+        const { data, textBuffer, tokenBuffer } = message.resume
+        const address = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 0xffff
+        if (!address(textBuffer) || !address(tokenBuffer) || data.byteLength < 12 || data.byteLength > 8 * 1024 * 1024)
+          throw new Error('Autosave checkpoint is invalid; it was left unchanged.')
+        engine.FS.writeFile('/resume.qzl', new Uint8Array(data))
+        engine.ccall('web_set_resume', null, ['number', 'number'], [textBuffer, tokenBuffer])
+        resuming = message.resume
+      }
       if (message.map && statusRows === 1) {
         const saved = validatePersistedMap(message.map)
         for (const room of saved.rooms)

@@ -22,8 +22,15 @@ export interface InputRequest {
   kind: 'line' | 'key' | 'restore'
   max: number
 }
+export interface ResumeCheckpoint {
+  data: ArrayBuffer
+  textBuffer: number
+  tokenBuffer: number
+  status: string
+  upper: string
+}
 export type ToEngine =
-  | { type: 'start'; story: ArrayBuffer; wasmBase: string; map?: MapSnapshot }
+  | { type: 'start'; story: ArrayBuffer; wasmBase: string; map?: MapSnapshot; autosave?: boolean; resume?: ResumeCheckpoint }
   | { type: 'input'; id: number; text: string; key: number }
   | { type: 'restore'; id: number; data: ArrayBuffer | null }
 
@@ -34,6 +41,9 @@ export type FromEngine =
   | { type: 'input'; request: InputRequest }
   | { type: 'state'; reason: number }
   | { type: 'save'; data: Uint8Array }
+  | { type: 'checkpoint'; data: Uint8Array; textBuffer: number; tokenBuffer: number }
+  | { type: 'checkpoint-failed' }
+  | { type: 'resumed' }
   | { type: 'warning' | 'error'; message: string }
   | { type: 'ended' }
 

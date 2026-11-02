@@ -83,14 +83,62 @@ processed locally; there is no backend, analytics or story upload.
   Successful restore/undo retains discovered rooms but discards pending traversal.
   In V5, undo depends on the story creating undo checkpoints; unavailable undo
   is reported by the core.
-  **Browser maps are session-only and are not included in saves.** Reloading the page
-  discards them; keep downloaded saves to retain game progress.
+- **Browser maps are not included in Quetzal saves.** In the browser they are
+  stored with the automatic progress described below; keep downloaded saves for
+  portable game progress.
+
+### Browser library and autosave
+
+The browser build keeps an **IndexedDB** library on this device. Nothing is
+uploaded; there is still no backend.
+
+- **Imported stories are stored automatically.** The full story bytes are
+  stored, keyed by SHA-256 of their contents, so later the **Browser library**
+  panel can reopen them without choosing the file again. **Forget** (confirmed)
+  deletes that story with its autosaves and map. It never deletes downloaded
+  save files.
+- **Progress autosaves at every line-input prompt.** The real interpreter
+  writes a Quetzal snapshot (memory, stack and program counter) before waiting
+  for your command. This is not just the map or transcript. The snapshot,
+  status line, last 256K characters of transcript and the V1-V3 map are stored
+  together. The **AUTOSAVE** readout shows the last stored time.
+- **Opening a story with an autosave asks first:** **Resume autosave**, **Resume
+  earlier run** (if one exists), **Start new game** or **Cancel**. Nothing is
+  overwritten before you choose. Resuming starts the real interpreter, restores
+  the snapshot at the prompt, then waits for your next command. The transcript
+  and map are restored from the same stored record. Undo history starts from the resumed
+  turn. As with Restore, a V3 split upper window is cleared on resume until the
+  game redraws it. V5 restores its saved upper-window text.
+- **Two slots are kept per story:** the latest checkpoint of the current run and
+  the latest checkpoint of one earlier run. **Restart**, the in-game restart or
+  Start new game moves the existing autosave to the earlier slot at the new
+  run's first prompt, replacing any older earlier run. If the same run advanced
+  elsewhere after you chose to resume (for example in another tab), that newer
+  checkpoint is moved to the earlier slot rather than overwritten.
+- Autosaves are internal mid-input checkpoints and **cannot** be loaded with the
+  story's Restore command. Use **Save** for portable `.qzl` files. Single-key
+  prompts (such as "press any key") are not checkpoints, so progress after the
+  last line prompt is not autosaved.
+- If the same story is open in another tab, autosave is **paused** there (Web
+  Locks), so two tabs cannot keep overwriting each other's progress.
+- Storage failures are shown, never silent. Examples include quota exceeded,
+  IndexedDB being unavailable (some private modes) or a damaged record. For a
+  failed autosave, the alert and amber AUTOSAVE readout say that recent progress
+  is not stored; play continues, so use Save. A record that cannot be read
+  disables autosave for that session and is left unchanged.
+- Storage is **per browser profile and per origin**. GitHub Pages, `localhost:4175`
+  and other ports or hosts each have separate libraries. Clearing site data or
+  browsing data, private or incognito windows, and browser eviction under storage
+  pressure remove it. **Request persistent storage** asks the browser to exempt
+  the site from eviction; it may decline.
+- The Windows desktop app does not use browser autosave. It keeps its existing
+  native path/map library and manual saves described below.
 
 ## Windows desktop (Tauri 2)
 
 The optional **Tauri 2** app embeds the same Vue/Three.js frontend, Web Worker
 and real C/WASM interpreter. It is not a separate interpreter port. The browser
-build and its session-only persistence remain unchanged.
+build and its browser-local library/autosave remain unchanged.
 
 Each passing `main` CI run produces a **webfrotz-windows-installer** artifact
 containing an x64 per-user NSIS installer and the matching source zip. This is
@@ -259,7 +307,8 @@ npm run test:browser
 Browser tests run against the production build, load generated original V1-V3/V5
 stories, and execute real Z-machine instructions through WASM. They cover text,
 status score/moves, movement/map links, toggle, restart, save/restore/cancel,
-undo, replacement, stop, viewport-height desktop and narrow layouts, Help and
+undo, replacement, stop, browser-library reopening, autosave resume, earlier-run
+recovery, second-tab pause and visible storage failures, viewport-height desktop and narrow layouts, Help and
 spoiler-gated vocabulary, WebGL fallback, V5 length scaling,
 V5 upper-window coordinates and explicit timed-input rejection. The fixture generator
 is a tiny bytecode assembler, not the application's interpreter.
@@ -364,7 +413,8 @@ no idle animation.
 Header validation rejects unsupported/truncated images, but it is not a complete
 validator for malicious Z-machine bytecode. Load trusted stories. The interpreter
 runs inside browser WebAssembly memory, not as a native executable.
-The transcript and map remain in memory for the session, not persisted storage.
+In the browser, the transcript tail, map and progress snapshot autosave to IndexedDB as described above;
+undo history, single-key prompt state and in-flight output after the last line prompt are not persisted.
 V5 timed-input requests fail with a specific capability error; a real-time story
 such as Freefall is not currently playable. Full timed-input support needs an
 asynchronous timeout/interrupt bridge, not a fabricated immediate key or disabled timer.
