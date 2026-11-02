@@ -5,7 +5,7 @@ function fixture(version: number, entries: number[][] = [[6, 7, 8]]) {
   const data = new ArrayBuffer(1536)
   const view = new DataView(data)
   view.setUint8(0, version)
-  for (const [address, value] of [[4, 1280], [6, 1280], [8, 1152], [10, 128], [12, 512], [14, 1280], [26, 1536 / (version === 5 ? 4 : 2)]])
+  for (const [address, value] of [[4, 1280], [6, 1280], [8, 1152], [10, 128], [12, 512], [14, 1280], [26, 1536 / (version >= 4 ? 4 : 2)]])
     view.setUint16(address, value)
   const length = version === 5 ? 6 : 4
   view.setUint8(1153, length + 1)
@@ -24,7 +24,7 @@ function fixture(version: number, entries: number[][] = [[6, 7, 8]]) {
 
 describe('bounded story-file dictionary decoding', () => {
   it('reads actual keys in V1/V2/V3/V5 without interpreting game state', () => {
-    for (const version of [1, 2, 3, 5]) {
+    for (const version of [1, 2, 3, 4, 5]) {
       const data = fixture(version)
       const before = new Uint8Array(data).slice()
       expect(readVocabulary(data)).toEqual(['abc'])

@@ -5,7 +5,7 @@ async function load(page: Page, version = 3) {
   await page.goto('/')
   await page.getByLabel('Load story file').setInputFiles(`public/fixtures/survey.z${version}`)
   await expect(page.getByLabel('Story command')).toBeEnabled()
-  await expect(page.locator('.current-location')).toHaveText('foyer')
+  await expect(page.locator('.current-location')).toHaveText(version <= 3 ? 'foyer' : `V${version} / no room telemetry`)
 }
 async function command(page: Page, text: string) {
   await page.getByLabel('Story command').fill(text)
@@ -81,16 +81,26 @@ test('real Quetzal save/restore, cancelled restore, undo and story replacement',
 test('unsupported stories, stop and narrow layout', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('Load story file').setInputFiles({
-    name: 'unsupported.z4', mimeType: 'application/octet-stream', buffer: Buffer.from([4, ...Array(99).fill(0)]),
+    name: 'unsupported.z6', mimeType: 'application/octet-stream', buffer: Buffer.from([6, ...Array(99).fill(0)]),
   })
 
-  await expect(page.getByRole('alert')).toContainText('V4 and V6-V8')
+  await expect(page.getByRole('alert')).toContainText('V6-V8')
   await page.setViewportSize({ width: 390, height: 844 })
   await load(page)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: 'Stop', exact: true }).click()
   await expect(page.getByLabel('Story command')).toBeDisabled()
   await expect(page.getByLabel('Story transcript')).toContainText('Interpreter stopped')
+})
+
+test('real WASM V4: input works without V1-V3 room telemetry', async ({ page }) => {
+  await load(page, 4)
+  await expect(page.getByLabel('Story transcript')).toContainText('webfrotz survey fixture')
+  await command(page, 'north')
+  await expect(page.getByLabel('Story transcript')).toContainText('you walk north')
+  await expect(page.locator('.current-location')).toHaveText('V4 / no room telemetry')
+  await expect(page.locator('.map-empty')).toContainText('Automatic mapping is supported for V1-V3 only.')
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
 test('map renderer and original retro presentation', async ({ page }) => {

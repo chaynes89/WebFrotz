@@ -1,4 +1,4 @@
-"""Original interactive V1-V3/V5 fixtures executing real Z-machine opcodes.
+"""Original interactive V1-V5 fixtures executing real Z-machine opcodes.
 
 No commercial story material or external story compiler is used.
 """
@@ -160,7 +160,7 @@ def interactive(version, timed=False, showcase=False):
         encoded = (offset & 0x3FFF) | 0x8000 if is_branch else offset & 0xFFFF
         code[address:address + 2] = encoded.to_bytes(2, "big")
     data[0x600:0x600 + len(code)] = code
-    for address, value in ((4, 0x600), (6, 0x600), (14, 0x600), (26, len(data) // (4 if version == 5 else 2))):
+    for address, value in ((4, 0x600), (6, 0x600), (14, 0x600), (26, len(data) // (4 if version >= 4 else 2))):
         data[address:address + 2] = value.to_bytes(2, "big")
     data[18:24] = b"WEB001"
     if showcase:
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("directory", type=Path)
     args = parser.parse_args()
     args.directory.mkdir(parents=True, exist_ok=True)
-    for version in (1, 2, 3, 5):
+    for version in (1, 2, 3, 4, 5):
         (args.directory / f"survey.z{version}").write_bytes(interactive(version))
     (args.directory / "timed.z5").write_bytes(interactive(5, timed=True))
     (args.directory / "station.z3").write_bytes(interactive(3, showcase=True))

@@ -11,7 +11,7 @@ assert(['127.0.0.1', 'localhost', '[::1]'].includes(preview.hostname), 'Private 
 const browser = await chromium.launch()
 try {
   const page = await browser.newPage()
-  const files = (await readdir(directory)).filter(name => /\.z[1235]$/i.test(name)).sort()
+  const files = (await readdir(directory)).filter(name => /\.z[1-5]$/i.test(name)).sort()
   assert(files.length > 0, 'No raw stories found.')
   for (const name of files) {
     try {

@@ -161,7 +161,7 @@ self.onmessage = async (event: MessageEvent<ToEngine>) => {
     if (message.type === 'start') {
       if (started) throw new Error('Use a new worker to replace or restart a story.')
       started = true
-      statusRows = validateStory(message.story) === 5 ? 0 : 1
+      statusRows = validateStory(message.story) <= 3 ? 1 : 0
       const url = `${message.wasmBase}frotz.js`
       const imported = await import(/* @vite-ignore */ url) as { default: Factory }
       engine = await imported.default({
