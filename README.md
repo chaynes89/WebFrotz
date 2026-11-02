@@ -1,4 +1,4 @@
-# WebFrotz 1.1
+# WebFrotz 1.2
 
 A deep-space story terminal: ivory hardware, phosphor-green text, dark CRT
 surfaces and an instrument-panel map. Built with **Vue 3, TypeScript, Vite and
@@ -14,12 +14,12 @@ and portable map model, not a mockup. No commercial story text is shown.*
 load a story you are entitled to play. Game data stays in your browser;
 GitHub Pages serves only the static app, WASM and original generated fixtures.
 
-## Download 1.1
+## Download 1.2
 
-Get **[WebFrotz 1.1](https://github.com/chaynes89/WebFrotz/releases/tag/v1.1.0)**.
-The release includes an x64 Windows installer, `webfrotz-1.1.0-static.zip` (a
+Get **[WebFrotz 1.2](https://github.com/chaynes89/WebFrotz/releases/tag/v1.2.0)**.
+The release includes an x64 Windows installer, `webfrotz-1.2.0-static.zip` (a
 ready-to-serve site with the real WASM interpreter), and the corresponding
-`webfrotz-1.1.0-source.zip`. Extract the static archive and serve its root over
+`webfrotz-1.2.0-source.zip`. Extract the static archive and serve its root over
 HTTP(S), for example:
 
 ```powershell
@@ -142,7 +142,7 @@ and real C/WASM interpreter. It is not a separate interpreter port. The browser
 build and its browser-local library/autosave remain unchanged.
 
 Download the x64 per-user NSIS installer from the
-[1.1 release](https://github.com/chaynes89/WebFrotz/releases/tag/v1.1.0).
+[1.2 release](https://github.com/chaynes89/WebFrotz/releases/tag/v1.2.0).
 Each passing `main` CI run also produces a **webfrotz-windows-installer**
 development artifact containing the installer and matching source zip.
 **No Node, Python, Rust, Emscripten or local HTTP server is needed on the
