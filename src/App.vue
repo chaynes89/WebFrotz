@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <RoomMap :map="map" :expanded="expanded" :supported="version <= 3" @toggle="expanded = !expanded" />
+      <RoomMap :map="map" :expanded="expanded" :supported="version <= 3" :version="version" @toggle="expanded = !expanded" />
 
       <section class="transcript-panel" aria-label="Story terminal">
         <header class="panel-heading"><span><span class="led" :class="{ idle: !online }" /> STORY CHANNEL / {{ phase }}</span>

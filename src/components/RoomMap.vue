@@ -4,11 +4,11 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { MapRoom, MapSnapshot } from '../engine/protocol'
 
-const props = defineProps<{ map: MapSnapshot; expanded: boolean; supported: boolean }>()
+const props = defineProps<{ map: MapSnapshot; expanded: boolean; supported: boolean; version: number }>()
 const emit = defineEmits<{ toggle: [] }>()
 const surface = ref<HTMLDivElement>()
 const failure = ref('')
-const current = computed(() => props.supported ? props.map.rooms[props.map.current]?.label || 'Awaiting location' : 'Mapping unavailable')
+const current = computed(() => props.supported ? props.map.rooms[props.map.current]?.label || 'Awaiting location' : `V${props.version} / no room telemetry`)
 let renderer: THREE.WebGLRenderer | undefined
 let controls: OrbitControls | undefined
 let observer: ResizeObserver | undefined
@@ -189,7 +189,7 @@ onBeforeUnmount(() => {
       <div ref="surface" class="map-surface" :class="{ unavailable: failure }" />
       <div v-if="!map.rooms.length && !failure" class="map-empty">
         <span class="crosshair">+</span>
-        <strong>{{ supported ? 'NO TERRAIN ACQUIRED' : 'V5 / NO ROOM TELEMETRY' }}</strong>
+        <strong>{{ supported ? 'NO TERRAIN ACQUIRED' : `V${version} / NO ROOM TELEMETRY` }}</strong>
         <span>{{ supported ? 'Room telemetry arrives as you explore.' : 'Automatic mapping is supported for V1-V3 only.' }}</span>
       </div>
       <p v-if="failure" class="map-failure" role="status">{{ failure }}</p>
