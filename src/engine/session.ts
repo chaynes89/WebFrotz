@@ -73,7 +73,6 @@ export function useSession() {
     if (desktop) return
     try {
       library.value = await listLibrary()
-      libraryError.value = ''
     } catch (cause) { libraryError.value = `Browser library unavailable: ${storageMessage(cause)}.` }
   }
 
@@ -273,7 +272,10 @@ export function useSession() {
       const v = validateStory(stored.data)
       const { story, record } = await browserEntry(stored.data, stored.name, v)
       if (selection !== activeSelection) return false
-      try { await putStory({ ...stored, openedAt: Date.now() }) } catch { /* Opening still works; order is cosmetic. */ }
+      try {
+        await putStory({ ...stored, openedAt: Date.now() })
+        libraryError.value = ''
+      } catch (cause) { libraryError.value = `Could not update library order (${storageMessage(cause)}).` }
       await begin(story, record)
       void refreshLibrary()
       return true
@@ -322,6 +324,7 @@ export function useSession() {
           const now = Date.now()
           try {
             await putStory({ id: story.id, name: file.name, version: v, data: data.slice(0), addedAt: now, openedAt: now })
+            libraryError.value = ''
           } catch (cause) {
             libraryError.value = `Story was not stored in this browser (${storageMessage(cause)}); choose the file again next time.`
           }

@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   portable:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - run: cmake -S . -B .build/portable -DBUILD_TESTING=ON
@@ -22,17 +22,17 @@ jobs:
       - run: ctest --test-dir .build/portable --output-on-failure
 
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: emscripten-core/setup-emsdk@v16
         with:
           version: '4.0.18'
           actions-cache-folder: emsdk-cache
@@ -45,16 +45,16 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
       - run: npm run package:release -- --source-ref "$GITHUB_SHA"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: browser-evidence
           path: test-results/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: webfrotz-static-site
           path: dist/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: webfrotz-release-assets
           path: .build/releases/*.zip
@@ -62,12 +62,12 @@ jobs:
   desktop-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - uses: dtolnay/rust-toolchain@master
@@ -78,7 +78,7 @@ jobs:
         with:
           workspaces: src-tauri
           cache-on-failure: true
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: emscripten-core/setup-emsdk@v16
         with:
           version: '4.0.18'
           actions-cache-folder: emsdk-cache
@@ -90,12 +90,12 @@ jobs:
         run: npm run desktop:build -- --ci --no-bundle --features desktop-smoke --config src-tauri/tauri.smoke.conf.json -- --locked
       - run: node tools/test_desktop.mjs
       - run: python tools/package_release.py .build/desktop-dist .build/desktop-source --source-ref "${{ github.sha }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: webfrotz-windows-evidence
           path: test-results/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: webfrotz-windows-installer
